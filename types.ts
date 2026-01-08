@@ -1,0 +1,51 @@
+
+export interface RawSentenceBlock {
+  timestamp: string;
+  sentence: string;
+  translation: string;
+  rawWordsBlock: string;
+}
+
+export interface WordEntry {
+  id: string; // Unique ID for React keys
+  timestamp: string; // e.g. 0:09:57
+  sentence: string;
+  translation: string;
+  
+  // Word specific data
+  word: string;
+  pos: string; // Part of speech
+  definition: string;
+  phonetic?: string;
+}
+
+export type QuizMode = 'flashcard' | 'dictation';
+
+export interface QuizConfig {
+  itemCount: number;
+  isRandom: boolean;
+}
+
+export interface DictationConfig extends QuizConfig {
+  showPhonetic: boolean;
+  showPos: boolean;
+  showDefinition: boolean;
+  showTranslation: boolean; // Sentence translation
+  showSentence: boolean; // Masked sentence
+}
+
+export type DictationMistake = {
+  wordId: string;
+  userInput: string;
+  isSkipped: boolean;
+};
+
+export interface DictationGlobalSettings {
+  defaultShowPhonetic: boolean;
+  defaultShowPos: boolean;
+  defaultShowDefinition: boolean;
+  defaultShowTranslation: boolean;
+  defaultShowSentence: boolean;
+  correctDelay: number; // ms
+  incorrectDelay: number; // ms
+}
