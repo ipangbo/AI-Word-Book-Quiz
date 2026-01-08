@@ -19,7 +19,7 @@ export interface WordEntry {
   phonetic?: string;
 }
 
-export type QuizMode = 'flashcard' | 'dictation';
+export type QuizMode = 'flashcard' | 'dictation' | 'cloze';
 
 export interface QuizConfig {
   itemCount: number;
@@ -34,10 +34,18 @@ export interface DictationConfig extends QuizConfig {
   showSentence: boolean; // Masked sentence
 }
 
+export interface ClozeConfig extends QuizConfig {
+  showPhonetic: boolean;
+  showPos: boolean;
+  showDefinition: boolean;
+  showTranslation: boolean;
+}
+
 export type DictationMistake = {
   wordId: string;
   userInput: string;
   isSkipped: boolean;
+  usedHint?: boolean; // For Cloze mode: true if sentence audio was played
 };
 
 export interface DictationGlobalSettings {
@@ -48,4 +56,11 @@ export interface DictationGlobalSettings {
   defaultShowSentence: boolean;
   correctDelay: number; // ms
   incorrectDelay: number; // ms
+}
+
+export interface ClozeGlobalSettings {
+  defaultShowPhonetic: boolean;
+  defaultShowPos: boolean;
+  defaultShowDefinition: boolean;
+  defaultShowTranslation: boolean;
 }

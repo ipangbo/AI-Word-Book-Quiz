@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, Bookmark, RotateCcw, ArrowRight } from 'lucide-react';
@@ -8,7 +9,7 @@ import { Ripple } from './Ripple';
 interface QuizSessionProps {
   entries: WordEntry[];
   config: QuizConfig;
-  onFinish: (markedIds: Set<string>) => void;
+  onFinish: (markedIds: Set<string>, sessionEntries: WordEntry[]) => void;
   onExit: () => void;
 }
 
@@ -41,7 +42,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
       setIsFlipped(false);
       setTimeout(() => setCurrentIndex(prev => prev + 1), 200);
     } else {
-      onFinish(markedIds);
+      onFinish(markedIds, queue);
     }
   };
 

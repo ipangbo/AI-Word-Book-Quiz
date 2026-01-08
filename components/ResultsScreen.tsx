@@ -1,34 +1,80 @@
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Copy, Check, RotateCcw, Home, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Copy, RotateCcw, Home, CheckCircle2, AlertCircle, Ear } from 'lucide-react';
 import { WordEntry, DictationMistake } from '../types';
 import { exportFailedWords } from '../utils/parser';
 import { speak } from '../utils/tts';
 import { Ripple } from './Ripple';
 import { ToastType } from './Toast';
+import { Switch } from './Switch';
 
 interface ResultsScreenProps {
-  allEntries: WordEntry[];
+  sessionEntries: WordEntry[];
   markedIds: Set<string>;
-  dictationMistakes?: DictationMistake[]; // Optional, for dictation mode
+  dictationMistakes?: DictationMistake[]; // Now serves as generic result container for Dictation and Cloze
   onHome: () => void;
   onRestart: () => void;
   showToast: (msg: string, type: ToastType) => void;
 }
 
-export const ResultsScreen: React.FC<ResultsScreenProps> = ({ allEntries, markedIds, dictationMistakes, onHome, onRestart, showToast }) => {
-  // Combine marked IDs (Flashcard) and mistakes (Dictation) to get the list of "failed" words
-  const mistakeMap = new Map<string, DictationMistake>();
-  if (dictationMistakes) {
-      dictationMistakes.forEach(m => mistakeMap.set(m.wordId, m));
-  }
+export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, markedIds, dictationMistakes, onHome, onRestart, showToast }) => {
+  const resultMap = useMemo(() => {
+    const map = new Map<string, DictationMistake>();
+    if (dictationMistakes) {
+        dictationMistakes.forEach(m => map.set(m.wordId, m));
+    }
+    return map;
+  }, [dictationMistakes]);
 
-  const failedEntries = allEntries.filter(e => markedIds.has(e.id) || mistakeMap.has(e.id));
+  // State to determine if we should export words that were solved with a hint
+  const [includeHintedInExport, setIncludeHintedInExport] = useState(true);
+
+  const getResultStatus = (entry: WordEntry): 'correct' | 'mistake' | 'marked' | 'hinted' => {
+      const res = resultMap.get(entry.id);
+      
+      // Prioritize detailed result info over generic 'marked' set
+      if (res) {
+          const userClean = (res.userInput || '').trim().toLowerCase();
+          const wordClean = (entry.word || '').trim().toLowerCase();
+          const isCorrect = !res.isSkipped && userClean === wordClean;
+
+          if (!isCorrect) return 'mistake';
+          if (res.usedHint) return 'hinted';
+          return 'correct';
+      }
+
+      // Fallback for Flashcards (where dictationMistakes is empty or item not in it)
+      if (markedIds.has(entry.id)) return 'marked';
+      
+      return 'correct';
+  };
+
+  // Filter logic for export
+  const exportableEntries = sessionEntries.filter(e => {
+    const status = getResultStatus(e);
+    if (status === 'marked') return true;
+    if (status === 'mistake') return true;
+    if (status === 'hinted' && includeHintedInExport) return true;
+    return false;
+  });
+  
+  // Stats
+  const total = sessionEntries.length;
+  const absoluteFailures = sessionEntries.filter(e => {
+      const status = getResultStatus(e);
+      // Failures are marked items or explicit mistakes. Hinted correct answers are not "failures" in the score.
+      return status === 'marked' || status === 'mistake';
+  }).length;
+  
+  const correct = total - absoluteFailures;
 
   const handleCopy = async () => {
-    if (failedEntries.length === 0) return;
-    const text = exportFailedWords(failedEntries);
+    if (exportableEntries.length === 0) {
+        showToast('No entries match criteria to export!', 'info');
+        return;
+    }
+    const text = exportFailedWords(exportableEntries);
     
     try {
       await navigator.clipboard.writeText(text);
@@ -39,85 +85,132 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ allEntries, marked
     }
   };
 
-  const isDictationMode = !!dictationMistakes;
+  const isQuizMode = !!dictationMistakes;
+  const hasHints = dictationMistakes?.some(m => m.usedHint);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-4xl mx-auto p-6 pb-20"
+      className="max-w-4xl mx-auto p-6 pb-32"
     >
-      <div className="text-center mb-10 mt-6">
-        <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${failedEntries.length === 0 ? 'bg-green-100 text-green-700' : 'bg-md-primary-container text-md-primary'}`}>
-          {failedEntries.length === 0 ? <CheckCircle2 size={40} /> : <AlertCircle size={40} />}
+      <div className="text-center mb-8 mt-6">
+        <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${absoluteFailures === 0 ? 'bg-green-100 text-green-700' : 'bg-md-primary-container text-md-primary'}`}>
+          {absoluteFailures === 0 ? <CheckCircle2 size={40} /> : <AlertCircle size={40} />}
         </div>
         <h2 className="text-3xl font-bold text-md-on-surface">Session Complete!</h2>
-        <p className="text-md-outline mt-2">
-          {failedEntries.length === 0 
-            ? "Perfect score! You crushed it." 
-            : `You have ${failedEntries.length} words to review.`}
-        </p>
+        <div className="flex items-center justify-center gap-4 mt-2">
+            <div className="flex flex-col items-center">
+                <span className="text-2xl font-bold text-green-600">{correct}</span>
+                <span className="text-xs text-md-outline uppercase font-bold tracking-widest">Correct</span>
+            </div>
+            <div className="w-px h-8 bg-md-outline/20" />
+            <div className="flex flex-col items-center">
+                <span className="text-2xl font-bold text-md-primary">{absoluteFailures}</span>
+                <span className="text-xs text-md-outline uppercase font-bold tracking-widest">Review</span>
+            </div>
+        </div>
       </div>
 
-      {failedEntries.length > 0 && (
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-bold text-md-on-surface">Review List</h3>
-            <button 
-              onClick={handleCopy}
-              className="relative overflow-hidden flex items-center gap-2 font-medium px-4 py-2 rounded-xl bg-md-primary-container text-md-on-primary-container hover:bg-md-primary hover:text-white transition-all shadow-sm"
-            >
-              <Ripple />
-              <div className="relative z-10 flex items-center gap-2">
-                 <Copy size={18} />
-                 <span>Copy as TeX</span>
-              </div>
-            </button>
-          </div>
+      <div className="mb-10">
+        <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
+          <h3 className="text-xl font-bold text-md-on-surface">Session Words</h3>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {failedEntries.map(entry => {
-               const mistake = mistakeMap.get(entry.id);
-               return (
-                <div key={entry.id} className="bg-white p-4 rounded-xl shadow-sm border border-md-surface-container hover:shadow-md transition-shadow">
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="flex flex-col">
-                        <span className="font-bold text-lg text-md-on-surface">{entry.word}</span>
-                        {entry.phonetic && (
-                          <span 
-                            onClick={() => speak(entry.word)}
-                            className="text-xs text-md-outline font-mono cursor-pointer hover:text-md-primary transition-colors select-none"
-                            title="Click to listen"
-                          >
-                            [{entry.phonetic}]
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs bg-md-secondary-container text-md-on-secondary-container px-2 py-0.5 rounded shrink-0">{entry.pos}</span>
-                    </div>
-                    
-                    {/* Dictation Specific Feedback */}
-                    {isDictationMode && mistake && (
-                        <div className="mb-3 p-2 bg-md-error-container/30 rounded-lg border border-md-error/10">
-                            <span className="text-xs font-bold text-md-error uppercase block mb-1">
-                                {mistake.isSkipped ? 'Skipped' : 'You Typed'}
-                            </span>
-                            <span className={`text-sm ${mistake.isSkipped ? 'text-md-outline italic' : 'text-md-error font-mono'}`}>
-                                {mistake.isSkipped ? '(No Input)' : mistake.userInput}
-                            </span>
-                        </div>
-                    )}
-
-                    <p className="text-sm text-md-outline mb-2">{entry.definition}</p>
-                    <p className="text-xs text-md-on-surface/70 italic border-t border-md-surface-container pt-2 mt-2">
-                    "{entry.sentence}"
-                    </p>
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+             {hasHints && (
+                 <div className="bg-white border border-md-surface-container px-3 py-1 rounded-xl shadow-sm w-full sm:w-auto flex items-center">
+                     <Switch 
+                        checked={includeHintedInExport} 
+                        onChange={setIncludeHintedInExport} 
+                        label="Export Hinted Words"
+                     />
+                 </div>
+             )}
+             
+             {exportableEntries.length > 0 && (
+                <button 
+                onClick={handleCopy}
+                className="relative overflow-hidden flex items-center justify-center gap-2 font-medium px-4 py-3 rounded-xl bg-md-primary-container text-md-on-primary-container hover:bg-md-primary hover:text-white transition-all shadow-sm w-full sm:w-auto"
+                >
+                <Ripple />
+                <div className="relative z-10 flex items-center gap-2">
+                    <Copy size={18} />
+                    <span>Copy ({exportableEntries.length})</span>
                 </div>
-               );
-            })}
+                </button>
+            )}
           </div>
         </div>
-      )}
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sessionEntries.map(entry => {
+             const result = resultMap.get(entry.id);
+             const status = getResultStatus(entry);
+             
+             const isError = status === 'mistake' || status === 'marked';
+             const isHinted = status === 'hinted';
+             
+             return (
+              <div key={entry.id} className={`bg-white p-5 rounded-3xl shadow-sm border transition-all ${
+                isError 
+                ? 'border-md-error/20 bg-md-error-container/5' 
+                : 'border-md-surface-container'
+              }`}>
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg text-md-on-surface">{entry.word}</span>
+                        {isError ? (
+                            <span className="text-md-error shrink-0"><AlertCircle size={16} /></span>
+                        ) : isHinted ? (
+                            <span className="text-amber-500 shrink-0"><Ear size={16} /></span>
+                        ) : (
+                            <span className="text-green-500 shrink-0"><CheckCircle2 size={16} /></span>
+                        )}
+                      </div>
+                      {entry.phonetic && (
+                        <span 
+                          onClick={() => speak(entry.word)}
+                          className="text-xs text-md-outline font-mono cursor-pointer hover:text-md-primary transition-colors select-none"
+                          title="Click to listen"
+                        >
+                          [{entry.phonetic}]
+                        </span>
+                      )}
+                    </div>
+                    
+                    <span className={`text-[10px] uppercase font-bold px-2 py-1 rounded-full ${
+                        status === 'marked' ? 'bg-md-error-container text-md-error' :
+                        status === 'mistake' ? 'bg-md-error-container text-md-error' :
+                        status === 'hinted' ? 'bg-amber-100 text-amber-700' :
+                        'bg-green-100 text-green-700'
+                    }`}>
+                      {status === 'marked' ? 'Marked' : 
+                       status === 'mistake' ? (result?.isSkipped ? 'Skipped' : 'Mistake') : 
+                       status === 'hinted' ? 'Hint Used' : 'Correct'}
+                    </span>
+                  </div>
+                  
+                  {isQuizMode && result && status === 'mistake' && (
+                      <div className="mb-3 p-2 bg-md-error-container/20 rounded-xl border border-md-error/10">
+                          <span className="text-[10px] font-bold text-md-error uppercase block mb-0.5">
+                              {result.isSkipped ? 'No Input' : 'You Typed'}
+                          </span>
+                          <span className={`text-sm ${result.isSkipped ? 'text-md-outline italic' : 'text-md-error font-mono'}`}>
+                              {result.isSkipped ? '—' : result.userInput}
+                          </span>
+                      </div>
+                  )}
+
+                  <p className="text-sm text-md-outline mb-3 leading-relaxed">{entry.definition}</p>
+                  <p className="text-xs text-md-on-surface/60 italic border-t border-md-surface-container pt-3">
+                    "{entry.sentence}"
+                  </p>
+              </div>
+             );
+          })}
+        </div>
+      </div>
 
       <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-4 px-6 z-10 pointer-events-none">
          <div className="flex gap-4 pointer-events-auto shadow-2xl rounded-full bg-white/90 backdrop-blur-md p-2 border border-md-surface-container">

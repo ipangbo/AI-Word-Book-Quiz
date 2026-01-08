@@ -1,7 +1,8 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { WordEntry } from '../types';
-import { ArrowRight, BookOpen } from 'lucide-react';
+import { ArrowRight, BookOpen, ArrowUp } from 'lucide-react';
 import { speak } from '../utils/tts';
 import { Ripple } from './Ripple';
 
@@ -11,6 +12,28 @@ interface ReviewScreenProps {
 }
 
 export const ReviewScreen: React.FC<ReviewScreenProps> = ({ data, onConfirm }) => {
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
   // Group entries by sentence for display
   const groupedData: Record<string, { sentence: string, translation: string, timestamp: string, words: WordEntry[] }> = {};
   
@@ -77,6 +100,22 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({ data, onConfirm }) =
           </div>
         ))}
       </div>
+
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            onClick={scrollToTop}
+            className="fixed bottom-28 right-6 z-40 bg-md-primary-container text-md-on-primary-container p-4 rounded-2xl shadow-lg hover:shadow-xl transition-shadow flex items-center justify-center group overflow-hidden"
+            aria-label="Back to top"
+          >
+            <Ripple />
+            <ArrowUp size={24} className="relative z-10 group-hover:-translate-y-1 transition-transform" />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <div className="fixed bottom-6 left-0 right-0 flex justify-center px-4">
         <button

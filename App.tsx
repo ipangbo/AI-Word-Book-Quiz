@@ -6,15 +6,17 @@ import { QuizSetup } from './components/QuizSetup';
 import { QuizSession } from './components/QuizSession';
 import { DictationSetup } from './components/DictationSetup';
 import { DictationSession } from './components/DictationSession';
+import { ClozeSetup } from './components/ClozeSetup';
+import { ClozeSession } from './components/ClozeSession';
 import { ResultsScreen } from './components/ResultsScreen';
 import { TopBar } from './components/TopBar';
 import { ReviewScreen } from './components/ReviewScreen';
 import { QuizSelectionScreen } from './components/QuizSelectionScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { ToastContainer, ToastType, ToastMessage } from './components/Toast';
-import { WordEntry, QuizConfig, DictationConfig, QuizMode, DictationMistake } from './types';
+import { WordEntry, QuizConfig, DictationConfig, ClozeConfig, QuizMode, DictationMistake } from './types';
 
-type ScreenName = 'home' | 'review' | 'quiz_select' | 'quiz_setup' | 'quiz_session' | 'dictation_setup' | 'dictation_session' | 'results' | 'settings';
+type ScreenName = 'home' | 'review' | 'quiz_select' | 'quiz_setup' | 'quiz_session' | 'dictation_setup' | 'dictation_session' | 'cloze_setup' | 'cloze_session' | 'results' | 'settings';
 
 const App: React.FC = () => {
   const [screen, setScreen] = useState<ScreenName>('home');
@@ -26,10 +28,12 @@ const App: React.FC = () => {
   const [quizMode, setQuizMode] = useState<QuizMode>('flashcard');
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
   const [dictationConfig, setDictationConfig] = useState<DictationConfig | null>(null);
+  const [clozeConfig, setClozeConfig] = useState<ClozeConfig | null>(null);
   
   // Results State
   const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
-  const [dictationMistakes, setDictationMistakes] = useState<DictationMistake[]>([]);
+  const [quizResults, setQuizResults] = useState<DictationMistake[]>([]);
+  const [sessionEntries, setSessionEntries] = useState<WordEntry[]>([]);
 
   // Multi-Toast state
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -67,11 +71,17 @@ const App: React.FC = () => {
       case 'dictation_setup':
         setScreen('quiz_select');
         break;
+      case 'cloze_setup':
+        setScreen('quiz_select');
+        break;
       case 'quiz_session':
         setScreen('quiz_setup');
         break;
       case 'dictation_session':
         setScreen('dictation_setup');
+        break;
+      case 'cloze_session':
+        setScreen('cloze_setup');
         break;
       case 'results':
         setScreen('quiz_select');
@@ -84,7 +94,7 @@ const App: React.FC = () => {
   const handleDataLoaded = (parsedData: WordEntry[]) => {
     setData(parsedData);
     navigateTo('review');
-    showToast(`Successfully imported ${parsedData.length} words.`, 'success');
+    // Toast removed as requested: information is now visible on Review Screen
   };
 
   const handleReviewConfirm = () => {
@@ -97,6 +107,8 @@ const App: React.FC = () => {
       navigateTo('quiz_setup');
     } else if (mode === 'dictation') {
       navigateTo('dictation_setup');
+    } else if (mode === 'cloze') {
+      navigateTo('cloze_setup');
     }
   };
 
@@ -106,9 +118,10 @@ const App: React.FC = () => {
     navigateTo('quiz_session');
   };
 
-  const handleFinishFlashcard = (marked: Set<string>) => {
+  const handleFinishFlashcard = (marked: Set<string>, entries: WordEntry[]) => {
     setMarkedIds(marked);
-    setDictationMistakes([]); // Clear dictation mistakes
+    setSessionEntries(entries);
+    setQuizResults([]); // Clear previous results
     navigateTo('results');
   };
 
@@ -118,19 +131,29 @@ const App: React.FC = () => {
     navigateTo('dictation_session');
   };
 
-  const handleFinishDictation = (mistakes: DictationMistake[]) => {
-    // Map mistakes to IDs for common compatibility, but keep details separate
+  // Cloze Logic
+  const handleStartCloze = (config: ClozeConfig) => {
+      setClozeConfig(config);
+      navigateTo('cloze_session');
+  };
+
+  // Generic Finish Handler for Dictation and Cloze
+  const handleFinishQuiz = (mistakes: DictationMistake[], entries: WordEntry[]) => {
+    // Map mistakes to IDs for compatibility with 'markedIds', though strict mapping isn't always 1:1 if we want detail
     const ids = new Set(mistakes.map(m => m.wordId));
     setMarkedIds(ids);
-    setDictationMistakes(mistakes);
+    setSessionEntries(entries);
+    setQuizResults(mistakes);
     navigateTo('results');
   };
 
   const handleRestart = () => {
     if (quizMode === 'flashcard') {
       navigateTo('quiz_setup');
-    } else {
+    } else if (quizMode === 'dictation') {
       navigateTo('dictation_setup');
+    } else {
+      navigateTo('cloze_setup');
     }
   };
 
@@ -145,8 +168,10 @@ const App: React.FC = () => {
     quiz_select: 'Select Quiz',
     quiz_setup: 'Configure Flashcards',
     dictation_setup: 'Configure Dictation',
+    cloze_setup: 'Configure Cloze Test',
     quiz_session: 'Flashcards',
     dictation_session: 'Dictation',
+    cloze_session: 'Cloze Test',
     results: 'Results',
     settings: 'Settings'
   };
@@ -191,6 +216,14 @@ const App: React.FC = () => {
              />
           )}
 
+          {screen === 'cloze_setup' && (
+              <ClozeSetup
+                key="cloze_setup"
+                totalWords={data.length}
+                onStart={handleStartCloze}
+              />
+          )}
+
           {screen === 'quiz_session' && quizConfig && (
             <QuizSession
               key="session"
@@ -206,17 +239,27 @@ const App: React.FC = () => {
               key="dictation_session"
               entries={data}
               config={dictationConfig}
-              onFinish={handleFinishDictation}
+              onFinish={handleFinishQuiz}
               onExit={handleRestart}
             />
+          )}
+
+          {screen === 'cloze_session' && clozeConfig && (
+              <ClozeSession
+                key="cloze_session"
+                entries={data}
+                config={clozeConfig}
+                onFinish={handleFinishQuiz}
+                onExit={handleRestart}
+              />
           )}
 
           {screen === 'results' && (
             <ResultsScreen
               key="results"
-              allEntries={data}
+              sessionEntries={sessionEntries}
               markedIds={markedIds}
-              dictationMistakes={dictationMistakes}
+              dictationMistakes={quizResults}
               onRestart={handleRestart}
               onHome={handleHome}
               showToast={showToast}
@@ -224,7 +267,11 @@ const App: React.FC = () => {
           )}
 
           {screen === 'settings' && (
-            <SettingsScreen key="settings" />
+            <SettingsScreen 
+              key="settings" 
+              onQuickImport={handleDataLoaded} 
+              showToast={showToast} 
+            />
           )}
         </AnimatePresence>
       </div>
