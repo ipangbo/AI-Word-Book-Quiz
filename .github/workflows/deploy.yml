@@ -34,3 +34,4 @@ jobs:
           REMOTE_PORT: ${{ secrets.DEPLOY_PORT }}
           TARGET: ${{ secrets.DEPLOY_PATH }}
           SOURCE: "dist/"
+          ARGS: "-rlgoDzvc --delete"
