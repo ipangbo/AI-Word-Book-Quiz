@@ -65,10 +65,10 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-2xl max-h-[85vh] bg-md-surface rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-2xl max-h-[85vh] bg-md-surface dark:bg-md-surface rounded-[32px] shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="p-6 border-b border-md-surface-container flex items-center justify-between bg-white dark:bg-md-surface-container/30">
+            <div className="p-6 border-b border-md-surface-container flex items-center justify-between bg-md-surface dark:bg-md-surface z-10">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-md-primary text-md-on-primary rounded-xl">
                   <Repeat size={24} />
@@ -88,15 +88,15 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4 relative bg-md-surface-container/20">
+            <div className="flex-1 overflow-y-auto p-6 space-y-4 relative bg-md-surface-container/20 dark:bg-black/20">
               <div className="space-y-4">
                 {steps.map((step) => (
                   <div 
                     key={step.id}
                     className={`relative group bg-white dark:bg-md-surface-container p-5 rounded-[24px] border shadow-sm transition-all ${
                         step.isCurrent 
-                        ? 'border-md-primary bg-md-primary/5 ring-4 ring-md-primary/5' 
-                        : 'border-md-outline/10 hover:border-md-primary/30 hover:shadow-md'
+                        ? 'border-md-primary bg-md-primary/5 dark:bg-md-primary/10 ring-4 ring-md-primary/5 dark:ring-md-primary/10' 
+                        : 'border-md-outline/10 hover:border-md-primary/30 hover:shadow-md dark:border-md-outline/20'
                     }`}
                   >
                     <div className="flex items-start gap-4">
@@ -132,7 +132,7 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
                     </div>
                     {step.isCurrent && (
                         <div className="absolute top-2 right-12">
-                            <span className="text-[10px] font-black text-md-primary bg-md-primary-container px-2 py-1 rounded-bl-xl rounded-tr-xl">YOU ARE HERE</span>
+                            <span className="text-[10px] font-black text-md-primary bg-md-primary-container dark:bg-md-primary-container px-2 py-1 rounded-bl-xl rounded-tr-xl">YOU ARE HERE</span>
                         </div>
                     )}
                   </div>
@@ -140,7 +140,7 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
               </div>
 
               {/* Bottom Tip */}
-              <div className="mt-4 p-6 bg-md-secondary-container/30 rounded-[24px] border border-md-secondary-container/50">
+              <div className="mt-4 p-6 bg-md-secondary-container/30 dark:bg-md-secondary-container/20 rounded-[24px] border border-md-secondary-container/50 dark:border-md-secondary-container/30">
                 <h4 className="font-bold text-md-on-secondary-container text-sm mb-2 flex items-center gap-2">
                     <Repeat size={16} /> 为什么需要这个闭环？
                 </h4>
@@ -151,7 +151,7 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
             </div>
 
             {/* Footer */}
-            <div className="p-4 text-center text-[10px] text-md-outline uppercase tracking-widest font-bold bg-white dark:bg-md-surface-container/40 border-t border-md-surface-container">
+            <div className="p-4 text-center text-[10px] text-md-outline uppercase tracking-widest font-bold bg-md-surface dark:bg-md-surface border-t border-md-surface-container">
               Ecosystem Map • Cinematic Language Mastery
             </div>
           </motion.div>
