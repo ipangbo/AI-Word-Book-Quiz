@@ -24,7 +24,7 @@ export const Switch: React.FC<SwitchProps> = ({
       className="flex items-center justify-between py-3 cursor-pointer group"
       onClick={() => onChange(!checked)}
     >
-      {label && <span className="text-md-on-surface font-medium text-sm flex-1 mr-4">{label}</span>}
+      {label && <span className="text-md-on-surface font-medium text-base flex-1 mr-4">{label}</span>}
       
       <div className={`relative w-[52px] h-[32px] rounded-full transition-colors duration-300 border-2 overflow-hidden ${
         checked 

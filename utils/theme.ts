@@ -1,4 +1,9 @@
+
 export type ThemeName = 'violet' | 'ocean' | 'nature' | 'volcano' | 'custom';
+export type ThemeMode = 'light' | 'dark' | 'system';
+export type FontSizeLevel = 'small' | 'medium' | 'large' | 'xl';
+
+export const FONT_SIZE_KEY = 'cinevocab_font_size';
 
 export interface ThemeColors {
   '--md-surface': string;
@@ -15,6 +20,7 @@ export interface ThemeColors {
   '--md-error-container': string;
 }
 
+// Light Themes (Material 3 Standard)
 export const themes: Record<Exclude<ThemeName, 'custom'>, ThemeColors> = {
   violet: {
     '--md-surface': '#FDF7FF',
@@ -74,6 +80,67 @@ export const themes: Record<Exclude<ThemeName, 'custom'>, ThemeColors> = {
   }
 };
 
+// Dark Themes (Material 3 Dark Tokens)
+// High contrast text (E6E1E5), Dark Surfaces (141218), Desaturated/Lighter Primaries
+export const darkThemes: Record<Exclude<ThemeName, 'custom'>, ThemeColors> = {
+  violet: {
+    '--md-surface': '#141218',
+    '--md-surface-container': '#211F26',
+    '--md-on-surface': '#E6E1E5',
+    '--md-primary': '#D0BCFF', // Lighter purple
+    '--md-on-primary': '#381E72',
+    '--md-primary-container': '#4F378B', // Darker purple container
+    '--md-on-primary-container': '#EADDFF',
+    '--md-secondary-container': '#4A4458',
+    '--md-on-secondary-container': '#E8DEF8',
+    '--md-outline': '#938F99',
+    '--md-error': '#F2B8B5',
+    '--md-error-container': '#8C1D18',
+  },
+  ocean: {
+    '--md-surface': '#001F26',
+    '--md-surface-container': '#00363D',
+    '--md-on-surface': '#A6EEFF',
+    '--md-primary': '#6AD3FF',
+    '--md-on-primary': '#003545',
+    '--md-primary-container': '#004D64',
+    '--md-on-primary-container': '#BDE9FF',
+    '--md-secondary-container': '#354A53',
+    '--md-on-secondary-container': '#CDE6F2',
+    '--md-outline': '#899297',
+    '--md-error': '#FFB4AB',
+    '--md-error-container': '#93000A',
+  },
+  nature: {
+    '--md-surface': '#10140F',
+    '--md-surface-container': '#1D211B',
+    '--md-on-surface': '#E2E3DE',
+    '--md-primary': '#94D989',
+    '--md-on-primary': '#033906',
+    '--md-primary-container': '#155217',
+    '--md-on-primary-container': '#AFF4A4',
+    '--md-secondary-container': '#3E4A3B',
+    '--md-on-secondary-container': '#D7E7D1',
+    '--md-outline': '#8C9389',
+    '--md-error': '#FFB4AB',
+    '--md-error-container': '#93000A',
+  },
+  volcano: {
+    '--md-surface': '#201A19',
+    '--md-surface-container': '#332B29',
+    '--md-on-surface': '#EDE0DE',
+    '--md-primary': '#FFB5A0',
+    '--md-on-primary': '#5F1500',
+    '--md-primary-container': '#81280C',
+    '--md-on-primary-container': '#FFDBD1',
+    '--md-secondary-container': '#59403B',
+    '--md-on-secondary-container': '#FADCD4',
+    '--md-outline': '#A08C87',
+    '--md-error': '#FFB4AB',
+    '--md-error-container': '#93000A',
+  }
+};
+
 export const SEED_COLORS: Record<Exclude<ThemeName, 'custom'>, string> = {
   violet: '#6750A4',
   ocean: '#006684',
@@ -81,34 +148,83 @@ export const SEED_COLORS: Record<Exclude<ThemeName, 'custom'>, string> = {
   volcano: '#A33C1E',
 };
 
-export const applyTheme = (themeName: ThemeName, customColor?: string) => {
+// Helper to determine active mode
+export const getSystemMode = (): 'light' | 'dark' => {
+  if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    return 'dark';
+  }
+  return 'light';
+};
+
+export const applyTheme = (themeName: ThemeName, mode: ThemeMode, customColor?: string) => {
   const root = document.documentElement;
   let colors: ThemeColors;
+  
+  // Resolve mode
+  const activeMode = mode === 'system' ? getSystemMode() : mode;
+  const isDark = activeMode === 'dark';
+
+  // Toggle class for Tailwind dark mode variant support
+  if (isDark) {
+    root.classList.add('dark');
+  } else {
+    root.classList.remove('dark');
+  }
 
   if (themeName === 'custom' && customColor) {
-    // Very basic generation for custom color to keep it lightweight
-    // Ideally this would use a library like material-color-utilities
-    colors = {
-      '--md-surface': '#FAFAFA',
-      '--md-surface-container': '#F0F0F0',
-      '--md-on-surface': '#1C1C1C',
-      '--md-primary': customColor,
-      '--md-on-primary': '#FFFFFF',
-      '--md-primary-container': adjustBrightness(customColor, 140), // Lighter
-      '--md-on-primary-container': adjustBrightness(customColor, -60), // Darker
-      '--md-secondary-container': adjustBrightness(customColor, 130),
-      '--md-on-secondary-container': '#1D1D1D',
-      '--md-outline': '#79747E',
-      '--md-error': '#B3261E',
-      '--md-error-container': '#F9DEDC',
-    };
+    // Generate Custom Theme on the fly
+    if (isDark) {
+      colors = {
+        '--md-surface': '#141414',
+        '--md-surface-container': '#1E1E1E',
+        '--md-on-surface': '#E6E6E6',
+        '--md-primary': adjustBrightness(customColor, 40), // Make pastel/lighter
+        '--md-on-primary': '#000000', // Dark text on light primary
+        '--md-primary-container': adjustBrightness(customColor, -40), // Darker container
+        '--md-on-primary-container': '#F0F0F0',
+        '--md-secondary-container': adjustBrightness(customColor, -60),
+        '--md-on-secondary-container': '#E0E0E0',
+        '--md-outline': '#938F99',
+        '--md-error': '#F2B8B5',
+        '--md-error-container': '#8C1D18',
+      };
+    } else {
+      colors = {
+        '--md-surface': '#FAFAFA',
+        '--md-surface-container': '#F0F0F0',
+        '--md-on-surface': '#1C1C1C',
+        '--md-primary': customColor,
+        '--md-on-primary': '#FFFFFF',
+        '--md-primary-container': adjustBrightness(customColor, 140), // Lighter
+        '--md-on-primary-container': adjustBrightness(customColor, -60), // Darker
+        '--md-secondary-container': adjustBrightness(customColor, 130),
+        '--md-on-secondary-container': '#1D1D1D',
+        '--md-outline': '#79747E',
+        '--md-error': '#B3261E',
+        '--md-error-container': '#F9DEDC',
+      };
+    }
   } else {
-    colors = themes[themeName as keyof typeof themes] || themes.violet;
+    // Standard themes
+    const source = isDark ? darkThemes : themes;
+    colors = source[themeName as keyof typeof themes] || (isDark ? darkThemes.violet : themes.violet);
   }
 
   Object.entries(colors).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
+};
+
+export const applyFontSize = (level: FontSizeLevel) => {
+  const sizeMap: Record<FontSizeLevel, string> = {
+    small: '12px',
+    medium: '14px',
+    large: '16px',
+    xl: '18px',
+  };
+  if (typeof document !== 'undefined') {
+      document.documentElement.style.fontSize = sizeMap[level] || '14px';
+  }
 };
 
 // Simple helper for custom colors (rough approx of tint/shade)

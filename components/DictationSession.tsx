@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Volume2, Eye, X, SkipForward, CheckCircle2, AlertCircle, PauseCircle } from 'lucide-react';
+import { ArrowRight, Volume2, Eye, X, SkipForward, CheckCircle2, AlertCircle, PauseCircle } from 'lucide-react';
 import { WordEntry, DictationConfig, DictationMistake } from '../types';
 import { speak } from '../utils/tts';
 import { getDictationSettings } from '../utils/settings';
@@ -65,6 +65,11 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
     setQueue(q.slice(0, config.itemCount));
   }, [entries, config]);
 
+  // Reset scroll on word change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentIndex]);
+
   const currentWord = queue[currentIndex];
 
   // Auto-speak and focus handling
@@ -114,14 +119,14 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   };
 
   const nextWord = () => {
-    setFeedback('idle');
     if (timerRef.current) clearTimeout(timerRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     
     if (currentIndex < queue.length - 1) {
+      setFeedback('idle'); // Only reset to idle if staying in session
       setCurrentIndex(prev => prev + 1);
     } else {
-      // Use ref to ensure we have the latest mistakes including the one just added
+      // For the last word, don't reset feedback to 'idle' to avoid triggering the auto-speak useEffect
       onFinish(mistakesRef.current, queue);
     }
   };
@@ -202,23 +207,19 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh] relative">
       <div className="flex items-center justify-between mb-2 p-4">
-        <button onClick={onExit} className="relative overflow-hidden p-2 rounded-full hover:bg-md-surface-container transition-colors">
-          <Ripple />
-          <ArrowLeft className="text-md-on-surface relative z-10" />
-        </button>
-        <div className="flex-1 mx-4 h-2 bg-md-surface-container rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-md-primary"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
           />
         </div>
-        <span className="text-sm font-medium font-mono text-md-outline mr-4">
+        <span className="text-sm font-medium font-mono text-md-outline ml-4">
           {currentIndex + 1}/{queue.length}
         </span>
         <button 
            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-           className={`relative overflow-hidden p-2 rounded-full transition-colors ${isSettingsOpen ? 'bg-md-primary-container text-md-on-primary-container' : 'hover:bg-md-surface-container text-md-outline'}`}
+           className={`relative overflow-hidden p-2 rounded-full ml-4 transition-colors ${isSettingsOpen ? 'bg-md-primary-container text-md-on-primary-container' : 'hover:bg-md-surface-container text-md-outline'}`}
         >
           <Ripple />
           <Eye size={24} className="relative z-10" />
@@ -231,11 +232,14 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
              initial={{ opacity: 0, y: -10 }}
              animate={{ opacity: 1, y: 0 }}
              exit={{ opacity: 0, y: -10 }}
-             className="absolute top-20 right-4 z-50 bg-white shadow-xl rounded-2xl border border-md-surface-container p-4 min-w-[280px]"
+             className="absolute top-20 right-4 z-50 bg-white dark:bg-md-surface-container shadow-xl rounded-2xl border border-md-surface-container p-4 min-w-[280px]"
            >
               <div className="flex justify-between items-center mb-4">
                  <span className="text-xs font-bold text-md-outline uppercase">Visible Hints</span>
-                 <button onClick={() => setIsSettingsOpen(false)} className="p-1 hover:bg-md-surface-container rounded-full"><X size={16} /></button>
+                 <button onClick={() => setIsSettingsOpen(false)} className="relative overflow-hidden p-1 hover:bg-md-surface-container rounded-full transition-colors">
+                   <Ripple />
+                   <X size={16} className="relative z-10" />
+                 </button>
               </div>
               <div className="space-y-1">
                  <Switch checked={showPhonetic} onChange={setShowPhonetic} label="Phonetic" />
@@ -258,12 +262,13 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
             >
                 <button 
                 onClick={handleReplay}
-                className="mb-8 relative group"
+                className="mb-8 relative group rounded-full"
                 title="Replay Audio (Alt + R)"
                 >
                 <div className="absolute inset-0 bg-md-primary/20 rounded-full animate-ping opacity-20 group-hover:opacity-40" />
-                <div className="bg-md-primary text-md-on-primary p-6 rounded-full shadow-lg relative z-10 hover:scale-105 transition-transform">
-                    <Volume2 size={48} />
+                <div className="bg-md-primary text-md-on-primary p-6 rounded-full shadow-lg relative z-10 hover:scale-105 transition-transform overflow-hidden">
+                     <Ripple color="rgba(255,255,255,0.3)" />
+                     <Volume2 size={48} className="relative z-10" />
                 </div>
                 <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs text-md-outline whitespace-nowrap opacity-60">Alt + R</span>
                 </button>
@@ -321,7 +326,7 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
                 initial={{ opacity: 0, scale: 0.9 }} 
                 animate={{ opacity: 1, scale: 1 }} 
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-md-surface-container flex flex-col items-center text-center cursor-pointer relative overflow-hidden"
+                className="w-full max-w-md bg-white dark:bg-md-surface-container rounded-3xl p-8 shadow-xl border border-md-surface-container flex flex-col items-center text-center cursor-pointer relative overflow-hidden"
                 onClick={handlePauseToggle}
             >
                 {!isPaused && (
@@ -337,9 +342,9 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
                     <p className="text-sm text-md-outline uppercase font-bold mb-1">Answer</p>
                     <p className="text-2xl font-bold text-md-on-surface mb-4">{currentWord.word}</p>
                     {feedback === 'incorrect' && (
-                        <div className="bg-red-50 p-3 rounded-xl border border-red-100">
+                        <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
                              <p className="text-xs text-red-500 font-bold uppercase mb-1">You Typed</p>
-                             <p className="text-lg text-red-800 font-mono">{inputValue || '(Nothing)'}</p>
+                             <p className="text-lg text-red-800 dark:text-red-200 font-mono">{inputValue || '(Nothing)'}</p>
                         </div>
                     )}
                 </div>

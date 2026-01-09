@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Layers, Edit3, Mic, ArrowRight } from 'lucide-react';
+import { Layers, Edit3, Mic, ArrowRight, ListChecks } from 'lucide-react';
 import { QuizMode } from '../types';
 import { Ripple } from './Ripple';
 
@@ -25,6 +25,14 @@ export const QuizSelectionScreen: React.FC<QuizSelectionScreenProps> = ({ onSele
       icon: <Layers size={24} />,
       colorClass: 'bg-purple-100',
       iconColor: 'text-purple-700'
+    },
+    {
+      id: 'multiple_choice',
+      title: 'Multiple Choice',
+      description: 'Quick recall practice. Select the correct word from a list of options to complete the movie line.',
+      icon: <ListChecks size={24} />,
+      colorClass: 'bg-orange-100',
+      iconColor: 'text-orange-700'
     },
     {
       id: 'dictation',
@@ -55,21 +63,21 @@ export const QuizSelectionScreen: React.FC<QuizSelectionScreenProps> = ({ onSele
         <p className="text-md-outline max-w-xl">Choose a specialized method to reinforce your vocabulary and master real-world movie dialogues.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 w-full">
         {modes.map((mode) => (
           <button 
             key={mode.id}
             onClick={() => onSelect(mode.id)}
-            className="relative overflow-hidden bg-white p-6 rounded-[32px] text-left border border-md-surface-container hover:border-md-primary/30 hover:shadow-lg transition-all group flex flex-col"
+            className="relative overflow-hidden bg-white dark:bg-md-surface-container p-6 rounded-[32px] text-left border border-md-surface-container hover:border-md-primary/30 hover:shadow-lg transition-all group flex flex-col h-full"
           >
             <Ripple />
             
             {/* Header: Icon + Title */}
             <div className="flex items-center gap-4 mb-5 relative z-10">
-              <div className={`${mode.colorClass} ${mode.iconColor} w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
+              <div className={`${mode.colorClass} ${mode.iconColor} w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
                 {mode.icon}
               </div>
-              <h3 className="text-2xl font-bold text-md-on-surface">
+              <h3 className="text-xl font-bold text-md-on-surface leading-tight">
                 {mode.title}
               </h3>
             </div>

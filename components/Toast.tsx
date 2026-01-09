@@ -1,6 +1,8 @@
+
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
+import { Ripple } from './Ripple';
 
 export type ToastType = 'error' | 'success' | 'info';
 
@@ -61,9 +63,10 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onRemove, duration = 4000 
       </span>
       <button 
         onClick={() => onRemove(toast.id)}
-        className="p-1.5 hover:bg-black/5 rounded-full transition-colors shrink-0 flex items-center justify-center"
+        className="relative overflow-hidden p-1.5 hover:bg-black/5 rounded-full transition-colors shrink-0 flex items-center justify-center"
       >
-        <X size={16} />
+        <Ripple />
+        <X size={16} className="relative z-10" />
       </button>
     </motion.div>
   );

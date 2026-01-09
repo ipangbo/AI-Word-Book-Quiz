@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Check, Bookmark, RotateCcw, ArrowRight } from 'lucide-react';
+import { Check, Bookmark, ArrowRight } from 'lucide-react';
 import { WordEntry, QuizConfig } from '../types';
 import { Flashcard } from './Flashcard';
 import { Ripple } from './Ripple';
@@ -32,6 +32,11 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
     setQueue(q.slice(0, config.itemCount));
   }, [entries, config]);
 
+  // Reset scroll when index changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentIndex]);
+
   if (queue.length === 0) return null;
 
   const currentCard = queue[currentIndex];
@@ -61,18 +66,14 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
     <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh]">
       {/* Header */}
       <div className="flex items-center justify-between mb-6 p-4">
-        <button onClick={onExit} className="relative overflow-hidden p-2 rounded-full hover:bg-md-surface-container transition-colors">
-          <Ripple />
-          <ArrowLeft className="text-md-on-surface relative z-10" />
-        </button>
-        <div className="flex-1 mx-4 h-2 bg-md-surface-container rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-md-primary"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
           />
         </div>
-        <span className="text-sm font-medium font-mono text-md-outline">
+        <span className="text-sm font-medium font-mono text-md-outline ml-4">
           {currentIndex + 1}/{queue.length}
         </span>
       </div>

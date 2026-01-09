@@ -70,7 +70,7 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({ data, onConfirm }) =
 
       <div className="space-y-4">
         {groups.map((group, idx) => (
-          <div key={idx} className="bg-white border border-md-surface-container rounded-2xl p-5 shadow-sm">
+          <div key={idx} className="bg-white dark:bg-md-surface-container border border-md-surface-container rounded-2xl p-5 shadow-sm">
              <div className="flex justify-between items-start mb-2">
                <span className="text-xs font-mono text-md-primary bg-md-primary-container px-2 py-0.5 rounded">
                   {group.timestamp}

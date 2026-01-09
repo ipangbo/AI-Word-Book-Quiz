@@ -1,53 +1,56 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Shuffle, ListOrdered, Settings2 } from 'lucide-react';
-import { DictationConfig } from '../types';
-import { getDictationSettings } from '../utils/settings';
+import { Play, Shuffle, ListOrdered, Settings2, Grid2X2 } from 'lucide-react';
+import { MultipleChoiceConfig } from '../types';
+import { getMCSettings } from '../utils/settings';
 import { Ripple } from './Ripple';
 import { Switch } from './Switch';
 import { ChoiceChip } from './ChoiceChip';
 
-interface DictationSetupProps {
+interface MultipleChoiceSetupProps {
   totalWords: number;
-  onStart: (config: DictationConfig) => void;
+  onStart: (config: MultipleChoiceConfig) => void;
 }
 
-export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onStart }) => {
+export const MultipleChoiceSetup: React.FC<MultipleChoiceSetupProps> = ({ totalWords, onStart }) => {
   const [count, setCount] = useState<number>(Math.min(10, totalWords));
   const [isRandom, setIsRandom] = useState(true);
+  const [optionCount, setOptionCount] = useState(4);
   
   // Hint Toggles
-  const [showPhonetic, setShowPhonetic] = useState(true);
+  const [showPhonetic, setShowPhonetic] = useState(false);
   const [showPos, setShowPos] = useState(true);
   const [showDefinition, setShowDefinition] = useState(true);
   const [showTranslation, setShowTranslation] = useState(false);
-  const [showSentence, setShowSentence] = useState(false);
 
   // Load defaults
   useEffect(() => {
-      const defaults = getDictationSettings();
+      const defaults = getMCSettings();
+      setOptionCount(defaults.defaultOptionCount);
       setShowPhonetic(defaults.defaultShowPhonetic);
       setShowPos(defaults.defaultShowPos);
       setShowDefinition(defaults.defaultShowDefinition);
       setShowTranslation(defaults.defaultShowTranslation);
-      setShowSentence(defaults.defaultShowSentence);
   }, []);
 
   // Quick select options
   const options = [5, 10, 20, 50].filter(n => n <= totalWords);
   if (!options.includes(totalWords)) options.push(totalWords);
   const uniqueOptions = Array.from(new Set(options)).sort((a, b) => a - b);
+  
+  // Option Count Choices
+  const optionCounts = [2, 3, 4, 6];
 
   const handleStart = () => {
       onStart({
           itemCount: count,
           isRandom,
+          optionCount,
           showPhonetic,
           showPos,
           showDefinition,
-          showTranslation,
-          showSentence
+          showTranslation
       });
   };
 
@@ -59,8 +62,8 @@ export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onSt
       className="flex flex-col items-center justify-center min-h-[70vh] w-full max-w-lg mx-auto p-6"
     >
       <div className="mb-6 text-center">
-        <h2 className="text-2xl font-bold text-md-on-surface">Dictation Setup</h2>
-        <p className="text-md-outline">Configure your listening practice</p>
+        <h2 className="text-2xl font-bold text-md-on-surface">Multiple Choice Setup</h2>
+        <p className="text-md-outline">Select the correct word from options</p>
       </div>
 
       <div className="w-full bg-md-surface-container p-6 rounded-3xl mb-6 shadow-sm">
@@ -77,6 +80,23 @@ export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onSt
                   label={opt === totalWords ? 'All' : opt.toString()}
                   selected={count === opt}
                   onClick={() => setCount(opt)}
+                />
+            ))}
+            </div>
+        </div>
+
+        {/* Option Count Selection */}
+        <div className="mb-6 border-b border-md-outline/10 pb-6">
+            <label className="flex items-center gap-2 text-sm font-bold text-md-on-secondary-container mb-4">
+               <Grid2X2 size={16} /> Number of Options
+            </label>
+            <div className="flex flex-wrap gap-2">
+            {optionCounts.map(opt => (
+                <ChoiceChip
+                  key={opt}
+                  label={`${opt} Choices`}
+                  selected={optionCount === opt}
+                  onClick={() => setOptionCount(opt)}
                 />
             ))}
             </div>
@@ -99,13 +119,13 @@ export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onSt
         <div>
             <div className="flex items-center gap-2 mb-3 text-md-primary">
                 <Settings2 size={18} />
-                <span className="text-sm font-bold uppercase tracking-wider">Default Hints</span>
+                <span className="text-sm font-bold uppercase tracking-wider">Visible Hints</span>
             </div>
             <div className="space-y-1">
-                <Switch checked={showPhonetic} onChange={setShowPhonetic} label="Show Phonetic [əˈnʌðər]" />
-                <Switch checked={showDefinition} onChange={setShowDefinition} label="Show English Definition" />
+                <Switch checked={showPhonetic} onChange={setShowPhonetic} label="Show Phonetic" />
+                <Switch checked={showPos} onChange={setShowPos} label="Show Part of Speech" />
+                <Switch checked={showDefinition} onChange={setShowDefinition} label="Show Definition" />
                 <Switch checked={showTranslation} onChange={setShowTranslation} label="Show Translation (CN)" />
-                <Switch checked={showSentence} onChange={setShowSentence} label="Show Masked Sentence" />
             </div>
         </div>
 
@@ -117,7 +137,7 @@ export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onSt
       >
         <Ripple color="rgba(255,255,255,0.3)" />
         <Play size={20} fill="currentColor" className="relative z-10" />
-        <span className="relative z-10">Start Dictation</span>
+        <span className="relative z-10">Start Quiz</span>
       </button>
     </motion.div>
   );

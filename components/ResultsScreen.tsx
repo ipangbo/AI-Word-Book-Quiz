@@ -1,7 +1,8 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, RotateCcw, Home, CheckCircle2, AlertCircle, Ear } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { WordEntry, DictationMistake } from '../types';
 import { exportFailedWords } from '../utils/parser';
 import { speak } from '../utils/tts';
@@ -50,6 +51,53 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
       return 'correct';
   };
 
+  // Stats calculation
+  const total = sessionEntries.length;
+  const absoluteFailures = useMemo(() => {
+    return sessionEntries.filter(e => {
+        const status = getResultStatus(e);
+        // Failures are marked items or explicit mistakes. Hinted correct answers are not "failures" in the score.
+        return status === 'marked' || status === 'mistake';
+    }).length;
+  }, [sessionEntries, resultMap, markedIds]);
+  
+  const correct = total - absoluteFailures;
+
+  // Celebration Effect
+  useEffect(() => {
+    if (absoluteFailures === 0 && total > 0) {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+      const interval: any = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        // since particles fall down, start a bit higher than random
+        // Using default colors for a vibrant, multi-colored festive feel
+        confetti({ 
+          ...defaults, 
+          particleCount, 
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+        });
+        confetti({ 
+          ...defaults, 
+          particleCount, 
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+        });
+      }, 250);
+
+      return () => clearInterval(interval);
+    }
+  }, [absoluteFailures, total]);
+
   // Filter logic for export
   const exportableEntries = sessionEntries.filter(e => {
     const status = getResultStatus(e);
@@ -58,16 +106,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
     if (status === 'hinted' && includeHintedInExport) return true;
     return false;
   });
-  
-  // Stats
-  const total = sessionEntries.length;
-  const absoluteFailures = sessionEntries.filter(e => {
-      const status = getResultStatus(e);
-      // Failures are marked items or explicit mistakes. Hinted correct answers are not "failures" in the score.
-      return status === 'marked' || status === 'mistake';
-  }).length;
-  
-  const correct = total - absoluteFailures;
 
   const handleCopy = async () => {
     if (exportableEntries.length === 0) {
@@ -98,7 +136,9 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
         <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 ${absoluteFailures === 0 ? 'bg-green-100 text-green-700' : 'bg-md-primary-container text-md-primary'}`}>
           {absoluteFailures === 0 ? <CheckCircle2 size={40} /> : <AlertCircle size={40} />}
         </div>
-        <h2 className="text-3xl font-bold text-md-on-surface">Session Complete!</h2>
+        <h2 className="text-3xl font-bold text-md-on-surface">
+          {absoluteFailures === 0 ? 'Perfect Score!' : 'Session Complete!'}
+        </h2>
         <div className="flex items-center justify-center gap-4 mt-2">
             <div className="flex flex-col items-center">
                 <span className="text-2xl font-bold text-green-600">{correct}</span>
@@ -118,7 +158,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
           
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
              {hasHints && (
-                 <div className="bg-white border border-md-surface-container px-3 py-1 rounded-xl shadow-sm w-full sm:w-auto flex items-center">
+                 <div className="bg-white dark:bg-md-surface-container border border-md-surface-container px-3 py-1 rounded-xl shadow-sm w-full sm:w-auto flex items-center">
                      <Switch 
                         checked={includeHintedInExport} 
                         onChange={setIncludeHintedInExport} 
@@ -151,7 +191,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
              const isHinted = status === 'hinted';
              
              return (
-              <div key={entry.id} className={`bg-white p-5 rounded-3xl shadow-sm border transition-all ${
+              <div key={entry.id} className={`bg-white dark:bg-md-surface-container p-5 rounded-3xl shadow-sm border transition-all ${
                 isError 
                 ? 'border-md-error/20 bg-md-error-container/5' 
                 : 'border-md-surface-container'
@@ -213,7 +253,7 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
       </div>
 
       <div className="fixed bottom-6 left-0 right-0 flex justify-center gap-4 px-6 z-10 pointer-events-none">
-         <div className="flex gap-4 pointer-events-auto shadow-2xl rounded-full bg-white/90 backdrop-blur-md p-2 border border-md-surface-container">
+         <div className="flex gap-4 pointer-events-auto shadow-2xl rounded-full bg-white/90 dark:bg-black/90 backdrop-blur-md p-2 border border-md-surface-container">
             <button
               onClick={onRestart}
               className="relative overflow-hidden flex items-center gap-2 px-6 py-3 rounded-full bg-md-secondary-container text-md-on-secondary-container font-medium hover:opacity-80 transition-opacity"

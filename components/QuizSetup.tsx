@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Settings, Play, Shuffle, ListOrdered } from 'lucide-react';
 import { WordEntry, QuizConfig } from '../types';
 import { Ripple } from './Ripple';
+import { ChoiceChip } from './ChoiceChip';
 
 interface QuizSetupProps {
   totalWords: number;
@@ -37,18 +39,12 @@ export const QuizSetup: React.FC<QuizSetupProps> = ({ totalWords, onStart }) => 
         
         <div className="flex flex-wrap gap-2 mb-6">
           {uniqueOptions.map(opt => (
-            <button
+            <ChoiceChip
               key={opt}
+              label={opt === totalWords ? 'All' : opt.toString()}
+              selected={count === opt}
               onClick={() => setCount(opt)}
-              className={`relative overflow-hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                count === opt
-                  ? 'bg-md-primary text-md-on-primary shadow-md'
-                  : 'bg-white text-md-on-surface hover:bg-md-secondary-container'
-              }`}
-            >
-              <Ripple color={count === opt ? "rgba(255,255,255,0.3)" : undefined} />
-              <span className="relative z-10">{opt === totalWords ? 'All' : opt}</span>
-            </button>
+            />
           ))}
         </div>
 

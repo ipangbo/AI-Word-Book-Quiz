@@ -6,6 +6,7 @@ import { ClozeConfig } from '../types';
 import { getClozeSettings } from '../utils/settings';
 import { Ripple } from './Ripple';
 import { Switch } from './Switch';
+import { ChoiceChip } from './ChoiceChip';
 
 interface ClozeSetupProps {
   totalWords: number;
@@ -68,18 +69,12 @@ export const ClozeSetup: React.FC<ClozeSetupProps> = ({ totalWords, onStart }) =
             </label>
             <div className="flex flex-wrap gap-2">
             {uniqueOptions.map(opt => (
-                <button
-                key={opt}
-                onClick={() => setCount(opt)}
-                className={`relative overflow-hidden px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                    count === opt
-                    ? 'bg-md-primary text-md-on-primary shadow-md'
-                    : 'bg-white text-md-on-surface hover:bg-md-secondary-container'
-                }`}
-                >
-                <Ripple color={count === opt ? "rgba(255,255,255,0.3)" : undefined} />
-                <span className="relative z-10">{opt === totalWords ? 'All' : opt}</span>
-                </button>
+                <ChoiceChip
+                  key={opt}
+                  label={opt === totalWords ? 'All' : opt.toString()}
+                  selected={count === opt}
+                  onClick={() => setCount(opt)}
+                />
             ))}
             </div>
         </div>

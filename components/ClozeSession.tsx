@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Volume2, Eye, X, SkipForward, CheckCircle2, AlertCircle, PauseCircle, Ear } from 'lucide-react';
+import { ArrowRight, Volume2, Eye, X, SkipForward, CheckCircle2, AlertCircle, PauseCircle, Ear } from 'lucide-react';
 import { WordEntry, ClozeConfig, DictationMistake } from '../types';
 import { speak } from '../utils/tts';
 import { getDictationSettings } from '../utils/settings'; // Reuse delays from dictation settings
@@ -61,6 +61,11 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
     setQueue(q.slice(0, config.itemCount));
   }, [entries, config]);
 
+  // Reset scroll on word change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [currentIndex]);
+
   const currentWord = queue[currentIndex];
 
   useEffect(() => {
@@ -94,13 +99,14 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
   };
 
   const nextWord = () => {
-    setFeedback('idle');
     if (timerRef.current) clearTimeout(timerRef.current);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     
     if (currentIndex < queue.length - 1) {
+      setFeedback('idle'); // Only reset to idle if staying in session
       setCurrentIndex(prev => prev + 1);
     } else {
+      // For the last word, don't reset feedback to 'idle'
       onFinish(resultsRef.current, queue);
     }
   };
@@ -201,23 +207,19 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh] relative">
       <div className="flex items-center justify-between mb-2 p-4">
-        <button onClick={onExit} className="relative overflow-hidden p-2 rounded-full hover:bg-md-surface-container transition-colors">
-          <Ripple />
-          <ArrowLeft className="text-md-on-surface relative z-10" />
-        </button>
-        <div className="flex-1 mx-4 h-2 bg-md-surface-container rounded-full overflow-hidden">
+        <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-md-primary"
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
           />
         </div>
-        <span className="text-sm font-medium font-mono text-md-outline mr-4">
+        <span className="text-sm font-medium font-mono text-md-outline ml-4">
           {currentIndex + 1}/{queue.length}
         </span>
         <button 
            onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-           className={`relative overflow-hidden p-2 rounded-full transition-colors ${isSettingsOpen ? 'bg-md-primary-container text-md-on-primary-container' : 'hover:bg-md-surface-container text-md-outline'}`}
+           className={`relative overflow-hidden p-2 rounded-full ml-4 transition-colors ${isSettingsOpen ? 'bg-md-primary-container text-md-on-primary-container' : 'hover:bg-md-surface-container text-md-outline'}`}
         >
           <Ripple />
           <Eye size={24} className="relative z-10" />
@@ -230,11 +232,14 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
              initial={{ opacity: 0, y: -10 }}
              animate={{ opacity: 1, y: 0 }}
              exit={{ opacity: 0, y: -10 }}
-             className="absolute top-20 right-4 z-50 bg-white shadow-xl rounded-2xl border border-md-surface-container p-4 min-w-[280px]"
+             className="absolute top-20 right-4 z-50 bg-white dark:bg-md-surface-container shadow-xl rounded-2xl border border-md-surface-container p-4 min-w-[280px]"
            >
               <div className="flex justify-between items-center mb-4">
                  <span className="text-xs font-bold text-md-outline uppercase">Visible Hints</span>
-                 <button onClick={() => setIsSettingsOpen(false)} className="p-1 hover:bg-md-surface-container rounded-full"><X size={16} /></button>
+                 <button onClick={() => setIsSettingsOpen(false)} className="relative overflow-hidden p-1 hover:bg-md-surface-container rounded-full transition-colors">
+                   <Ripple />
+                   <X size={16} className="relative z-10" />
+                 </button>
               </div>
               <div className="space-y-1">
                  <Switch checked={showPhonetic} onChange={setShowPhonetic} label="Phonetic" />
@@ -255,7 +260,7 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
                 className="w-full flex flex-col items-center"
             >
                 {/* Sentence Area */}
-                <div className="w-full bg-white border border-md-surface-container rounded-3xl p-6 md:p-10 mb-8 shadow-sm text-center">
+                <div className="w-full bg-white dark:bg-md-surface-container border border-md-surface-container rounded-3xl p-6 md:p-10 mb-8 shadow-sm text-center">
                     {getMaskedSentence()}
                 </div>
 
@@ -294,7 +299,7 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
                             autoFocus
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full bg-md-surface-container/30 border-b-2 text-center text-2xl py-3 rounded-t-lg focus:outline-none transition-colors font-medium placeholder:text-md-outline/30 border-md-outline/40 focus:border-md-primary text-md-on-surface focus:bg-md-primary-container/10"
+                            className="w-full bg-white dark:bg-md-surface-container border-b-2 text-center text-2xl py-3 rounded-t-lg focus:outline-none transition-colors font-medium placeholder:text-md-outline placeholder:opacity-50 border-md-outline focus:border-md-primary text-md-on-surface"
                             placeholder="Type the missing word..."
                             autoComplete="off"
                             autoCorrect="off"
@@ -304,16 +309,19 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
 
                     <button 
                         onClick={playSentenceHint}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-full transition-all border ${
+                        className={`relative overflow-hidden flex items-center gap-2 px-5 py-2.5 rounded-full transition-all border ${
                             hintUsed 
                             ? 'bg-amber-100 text-amber-800 border-amber-200' 
-                            : 'bg-white text-md-primary border-md-outline/20 hover:border-md-primary hover:bg-md-primary/5'
+                            : 'bg-white dark:bg-md-surface-container text-md-primary border-md-outline/20 hover:border-md-primary hover:bg-md-primary/5'
                         }`}
                     >
-                        {hintUsed ? <Ear size={18} /> : <Volume2 size={18} />}
-                        <span className="text-sm font-bold">
-                            {hintUsed ? 'Audio Hint Used' : 'Play Sentence Audio'}
-                        </span>
+                        <Ripple />
+                        <div className="relative z-10 flex items-center gap-2">
+                           {hintUsed ? <Ear size={18} /> : <Volume2 size={18} />}
+                           <span className="text-sm font-bold">
+                               {hintUsed ? 'Audio Hint Used' : 'Play Sentence Audio'}
+                           </span>
+                        </div>
                     </button>
                 </div>
             </motion.div>
@@ -323,7 +331,7 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
                 initial={{ opacity: 0, scale: 0.9 }} 
                 animate={{ opacity: 1, scale: 1 }} 
                 exit={{ opacity: 0, scale: 0.9 }}
-                className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-md-surface-container flex flex-col items-center text-center cursor-pointer relative overflow-hidden"
+                className="w-full max-w-md bg-white dark:bg-md-surface-container rounded-3xl p-8 shadow-xl border border-md-surface-container flex flex-col items-center text-center cursor-pointer relative overflow-hidden"
                 onClick={handlePauseToggle}
             >
                 {!isPaused && (
@@ -348,9 +356,9 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
                     <p className="text-sm text-md-outline uppercase font-bold mb-1">Answer</p>
                     <p className="text-2xl font-bold text-md-on-surface mb-4">{currentWord.word}</p>
                     {feedback === 'incorrect' && (
-                        <div className="bg-red-50 p-3 rounded-xl border border-red-100">
+                        <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-xl border border-red-100 dark:border-red-900/30">
                              <p className="text-xs text-red-500 font-bold uppercase mb-1">You Typed</p>
-                             <p className="text-lg text-red-800 font-mono">{inputValue || '(Nothing)'}</p>
+                             <p className="text-lg text-red-800 dark:text-red-200 font-mono">{inputValue || '(Nothing)'}</p>
                         </div>
                     )}
                 </div>

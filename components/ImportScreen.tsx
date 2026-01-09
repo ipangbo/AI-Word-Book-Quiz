@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { ArrowRight, ClipboardPaste, FileUp, FileText, X } from 'lucide-react';
 import { parseInputData } from '../utils/parser';
 import { WordEntry } from '../types';
@@ -93,7 +93,7 @@ export const ImportScreen: React.FC<ImportScreenProps> = ({ onDataLoaded, showTo
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center w-full max-w-2xl mx-auto p-6"
+      className="flex flex-col items-center w-full max-w-2xl mx-auto p-6 relative"
     >
       <div className="mb-6 text-center mt-4">
         <Logo size={80} className="mx-auto mb-4" />

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { WordEntry } from '../types';
@@ -44,7 +45,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ data, isFlipped, onFlip })
       >
         {/* FRONT */}
         <div 
-          className="absolute w-full h-full backface-hidden bg-white rounded-3xl shadow-xl border border-md-surface-container flex flex-col items-center justify-center p-8"
+          className="absolute w-full h-full backface-hidden bg-white dark:bg-md-surface-container rounded-3xl shadow-xl border border-md-surface-container flex flex-col items-center justify-center p-8"
           style={{ backfaceVisibility: 'hidden' }}
         >
           <span className="absolute top-6 right-6 text-xs font-mono text-md-outline bg-md-surface-container px-2 py-1 rounded">
@@ -67,7 +68,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ data, isFlipped, onFlip })
             "{data.translation}"
           </p>
 
-          <div className="bg-white/60 w-full p-4 rounded-xl backdrop-blur-sm">
+          <div className="bg-white/60 dark:bg-black/40 w-full p-4 rounded-xl backdrop-blur-sm">
             <div className="flex items-baseline gap-2 mb-1 justify-center">
               <h3 className="text-xl font-bold text-md-primary">{data.word}</h3>
               <span className="text-sm italic text-md-outline">{data.pos}</span>

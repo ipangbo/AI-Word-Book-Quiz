@@ -19,7 +19,7 @@ export interface WordEntry {
   phonetic?: string;
 }
 
-export type QuizMode = 'flashcard' | 'dictation' | 'cloze';
+export type QuizMode = 'flashcard' | 'dictation' | 'cloze' | 'multiple_choice';
 
 export interface QuizConfig {
   itemCount: number;
@@ -35,6 +35,14 @@ export interface DictationConfig extends QuizConfig {
 }
 
 export interface ClozeConfig extends QuizConfig {
+  showPhonetic: boolean;
+  showPos: boolean;
+  showDefinition: boolean;
+  showTranslation: boolean;
+}
+
+export interface MultipleChoiceConfig extends QuizConfig {
+  optionCount: number; // e.g. 4
   showPhonetic: boolean;
   showPos: boolean;
   showDefinition: boolean;
@@ -59,6 +67,14 @@ export interface DictationGlobalSettings {
 }
 
 export interface ClozeGlobalSettings {
+  defaultShowPhonetic: boolean;
+  defaultShowPos: boolean;
+  defaultShowDefinition: boolean;
+  defaultShowTranslation: boolean;
+}
+
+export interface MultipleChoiceGlobalSettings {
+  defaultOptionCount: number;
   defaultShowPhonetic: boolean;
   defaultShowPos: boolean;
   defaultShowDefinition: boolean;
