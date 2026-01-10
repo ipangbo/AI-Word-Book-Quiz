@@ -1,3 +1,4 @@
+
 import { WordEntry } from '../types';
 
 /**
@@ -51,6 +52,10 @@ export const parseInputData = (rawText: string): WordEntry[] => {
   const entries: WordEntry[] = [];
   const blockMarker = "\\SentenceBlock";
   let currentIndex = 0;
+  
+  // Track unique keys to prevent duplicates
+  // Key composition: Timestamp + Sentence + Word + Definition
+  const uniqueKeys = new Set<string>();
 
   while (true) {
     const blockStart = rawText.indexOf(blockMarker, currentIndex);
@@ -154,16 +159,30 @@ export const parseInputData = (rawText: string): WordEntry[] => {
              }
         }
 
-        entries.push({
-            id: generateId(),
-            timestamp: timestamp.trim(),
-            sentence: sentence.trim(),
-            translation: translation.trim(),
-            word: word.trim(),
-            pos: pos.trim(),
-            definition: def.trim(),
-            phonetic: phonetic ? phonetic.trim() : undefined
-        });
+        const trimmedT = timestamp.trim();
+        const trimmedS = sentence.trim();
+        const trimmedW = word.trim();
+        const trimmedD = def.trim();
+
+        // Deduplication Logic:
+        // We consider a word entry a duplicate only if:
+        // 1. It belongs to the same sentence block (Same Timestamp + Sentence)
+        // 2. It is the same word definition (Same Word + Definition)
+        const key = JSON.stringify({ t: trimmedT, s: trimmedS, w: trimmedW, d: trimmedD });
+
+        if (!uniqueKeys.has(key)) {
+            uniqueKeys.add(key);
+            entries.push({
+                id: generateId(),
+                timestamp: trimmedT,
+                sentence: trimmedS,
+                translation: translation.trim(),
+                word: trimmedW,
+                pos: pos.trim(),
+                definition: trimmedD,
+                phonetic: phonetic ? phonetic.trim() : undefined
+            });
+        }
         
         wIdx = wPtr;
     }
