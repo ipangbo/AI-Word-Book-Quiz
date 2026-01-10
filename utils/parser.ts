@@ -45,8 +45,7 @@ const generateId = () => {
 
 /**
  * Parses the raw TeX string into structured WordEntry objects.
- * Flattens the hierarchy: 1 Sentence with 2 Words becomes 2 WordEntries.
- * Uses a stateful parser to handle nested braces correctly.
+ * Expects new format: \Word{wordInSentence}{wordPrototype}{pos}{def}[phonetic]
  */
 export const parseInputData = (rawText: string): WordEntry[] => {
   const entries: WordEntry[] = [];
@@ -54,7 +53,6 @@ export const parseInputData = (rawText: string): WordEntry[] => {
   let currentIndex = 0;
   
   // Track unique keys to prevent duplicates
-  // Key composition: Timestamp + Sentence + Word + Definition
   const uniqueKeys = new Set<string>();
 
   while (true) {
@@ -76,12 +74,10 @@ export const parseInputData = (rawText: string): WordEntry[] => {
         timestamp = res.content;
         ptr = res.endIndex;
       } else {
-        // Malformed bracket, maybe not a timestamp, skip block
         currentIndex = blockStart + 1;
         continue;
       }
     } else {
-        // No timestamp found, ensure we continue from after whitespace
         ptr = tempPtr; 
     }
 
@@ -127,27 +123,32 @@ export const parseInputData = (rawText: string): WordEntry[] => {
         
         let wPtr = wStart + wordMarker.length;
         
-        // Word
-        let word = "";
-        const wRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
-        if (wRes) { word = wRes.content; wPtr = wRes.endIndex; }
+        // Param 1: Word in Sentence (New)
+        let wordInSentence = "";
+        const wisRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
+        if (wisRes) { wordInSentence = wisRes.content; wPtr = wisRes.endIndex; }
         else { wIdx = wStart + 1; continue; }
 
-        // POS
+        // Param 2: Word Prototype (Old 'word')
+        let wordPrototype = "";
+        const wpRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
+        if (wpRes) { wordPrototype = wpRes.content; wPtr = wpRes.endIndex; }
+        else { wIdx = wStart + 1; continue; }
+
+        // Param 3: POS
         let pos = "";
         const pRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
         if (pRes) { pos = pRes.content; wPtr = pRes.endIndex; }
         else { wIdx = wStart + 1; continue; }
 
-        // Def
+        // Param 4: Def
         let def = "";
         const dRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
         if (dRes) { def = dRes.content; wPtr = dRes.endIndex; }
         else { wIdx = wStart + 1; continue; }
         
-        // Phonetic (Optional)
+        // Param 5: Phonetic (Optional)
         let phonetic: string | undefined = undefined;
-        // Check for [
         let tempWPtr = wPtr;
         while (tempWPtr < rawWordsBlock.length && /\s/.test(rawWordsBlock[tempWPtr])) tempWPtr++;
         
@@ -161,14 +162,12 @@ export const parseInputData = (rawText: string): WordEntry[] => {
 
         const trimmedT = timestamp.trim();
         const trimmedS = sentence.trim();
-        const trimmedW = word.trim();
+        const trimmedWIS = wordInSentence.trim();
+        const trimmedWP = wordPrototype.trim();
         const trimmedD = def.trim();
 
-        // Deduplication Logic:
-        // We consider a word entry a duplicate only if:
-        // 1. It belongs to the same sentence block (Same Timestamp + Sentence)
-        // 2. It is the same word definition (Same Word + Definition)
-        const key = JSON.stringify({ t: trimmedT, s: trimmedS, w: trimmedW, d: trimmedD });
+        // Deduplication Logic
+        const key = JSON.stringify({ t: trimmedT, s: trimmedS, w: trimmedWP, d: trimmedD });
 
         if (!uniqueKeys.has(key)) {
             uniqueKeys.add(key);
@@ -177,7 +176,8 @@ export const parseInputData = (rawText: string): WordEntry[] => {
                 timestamp: trimmedT,
                 sentence: trimmedS,
                 translation: translation.trim(),
-                word: trimmedW,
+                wordInSentence: trimmedWIS,
+                word: trimmedWP,
                 pos: pos.trim(),
                 definition: trimmedD,
                 phonetic: phonetic ? phonetic.trim() : undefined
@@ -195,13 +195,12 @@ export const parseInputData = (rawText: string): WordEntry[] => {
 
 /**
  * Reconstructs the LaTeX format from a list of WordEntries.
+ * Updated to support \Word{inSentence}{prototype}...
  */
 export const exportFailedWords = (entries: WordEntry[]): string => {
-  // Group by sentence+timestamp to reconstruct blocks
   const groups: Record<string, { entry: WordEntry; words: WordEntry[] }> = {};
 
   entries.forEach(entry => {
-    // specific key to identify unique sentence context
     const key = `${entry.timestamp}|${entry.sentence}`;
     if (!groups[key]) {
       groups[key] = { entry, words: [] };
@@ -218,7 +217,8 @@ export const exportFailedWords = (entries: WordEntry[]): string => {
     
     group.words.forEach(w => {
       const phoneticPart = w.phonetic ? `[${w.phonetic}]` : '';
-      output += `    \\Word{${w.word}}{${w.pos}}{${w.definition}}${phoneticPart}\n`;
+      // New Format: \Word{inSentence}{prototype}{pos}{def}[phonetic]
+      output += `    \\Word{${w.wordInSentence}}{${w.word}}{${w.pos}}{${w.definition}}${phoneticPart}\n`;
     });
     
     output += `}\n\n`;

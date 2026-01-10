@@ -199,7 +199,9 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   };
 
   const getMaskedSentence = () => {
-     const escaped = currentWord.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+     // Use wordInSentence for accurate masking
+     const target = currentWord.wordInSentence || currentWord.word;
+     const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      const regex = new RegExp(escaped, 'gi');
      return currentWord.sentence.replace(regex, '_______');
   };

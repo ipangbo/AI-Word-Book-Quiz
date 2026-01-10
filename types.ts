@@ -13,7 +13,8 @@ export interface WordEntry {
   translation: string;
   
   // Word specific data
-  word: string;
+  wordInSentence: string; // New: The specific form in the sentence (e.g. "mongrels")
+  word: string;           // The prototype/lemma (e.g. "mongrel")
   pos: string; // Part of speech
   definition: string;
   phonetic?: string;

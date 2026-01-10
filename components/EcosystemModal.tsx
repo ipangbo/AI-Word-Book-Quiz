@@ -16,7 +16,7 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
       name: 'CineGlot',
       description: '生词筛选与语境提取。从电影、电视剧字幕文件中快速锁定生词，并保留其原始对白语境。',
       icon: <Globe size={24} />,
-      link: 'https://cineglot.ipangbo.cn',
+      link: '#', // Placeholder
       color: 'bg-blue-500',
       tag: '数据源'
     },

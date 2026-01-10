@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Bookmark, ArrowRight } from 'lucide-react';
+import { Check, Bookmark, ArrowRight, ArrowLeft } from 'lucide-react';
 import { WordEntry, QuizConfig } from '../types';
 import { Flashcard } from './Flashcard';
 import { Ripple } from './Ripple';
@@ -18,6 +18,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
+  const [direction, setDirection] = useState(1); // 1 for next, -1 for prev
 
   // Initialize Queue
   useEffect(() => {
@@ -44,10 +45,19 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
 
   const handleNext = () => {
     if (currentIndex < queue.length - 1) {
+      setDirection(1);
       setIsFlipped(false);
       setTimeout(() => setCurrentIndex(prev => prev + 1), 200);
     } else {
       onFinish(markedIds, queue);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      setDirection(-1);
+      setIsFlipped(false);
+      setTimeout(() => setCurrentIndex(prev => prev - 1), 200);
     }
   };
 
@@ -65,7 +75,20 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh]">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 p-4">
+      <div className="flex items-center gap-4 mb-6 p-4">
+        <button
+            onClick={handlePrev}
+            disabled={currentIndex === 0}
+            className={`relative overflow-hidden p-2 rounded-full transition-colors ${
+                currentIndex === 0 
+                ? 'text-md-outline/20 cursor-not-allowed' 
+                : 'text-md-on-surface hover:bg-md-surface-container'
+            }`}
+        >
+            <Ripple />
+            <ArrowLeft size={24} className="relative z-10" />
+        </button>
+
         <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-md-primary"
@@ -73,7 +96,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
             animate={{ width: `${progress}%` }}
           />
         </div>
-        <span className="text-sm font-medium font-mono text-md-outline ml-4">
+        <span className="text-sm font-medium font-mono text-md-outline min-w-[3ch] text-right">
           {currentIndex + 1}/{queue.length}
         </span>
       </div>
@@ -83,9 +106,9 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
         <AnimatePresence mode="wait">
           <motion.div
             key={currentCard.id}
-            initial={{ x: 50, opacity: 0 }}
+            initial={{ x: direction * 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: -50, opacity: 0 }}
+            exit={{ x: direction * -50, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="w-full flex justify-center"
           >

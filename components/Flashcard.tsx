@@ -2,7 +2,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { WordEntry } from '../types';
-import { Volume2 } from 'lucide-react';
 import { speak } from '../utils/tts';
 
 interface FlashcardProps {
@@ -15,15 +14,15 @@ export const Flashcard: React.FC<FlashcardProps> = ({ data, isFlipped, onFlip })
   
   // Helper to highlight the target word in the sentence
   const renderSentence = () => {
-    // A simple robust replacement.
-    // Note: This matches strictly. If the word form in text differs (e.g., gnawing vs gnaw), 
-    // it might miss without stemming. For now, strict match or simple casing.
-    const parts = data.sentence.split(new RegExp(`(${data.word})`, 'gi'));
+    // Use wordInSentence for accurate highlighting of irregular forms
+    const target = data.wordInSentence || data.word;
+    const escapedTarget = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const parts = data.sentence.split(new RegExp(`(${escapedTarget})`, 'gi'));
     
     return (
       <p className="text-2xl md:text-3xl font-medium leading-relaxed text-center text-md-on-surface mb-6">
         {parts.map((part, i) => 
-          part.toLowerCase() === data.word.toLowerCase() ? (
+          part.toLowerCase() === target.toLowerCase() ? (
             <span key={i} className="text-md-primary font-bold bg-md-primary-container px-1 rounded-md mx-0.5">
               {part}
             </span>

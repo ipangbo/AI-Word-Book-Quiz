@@ -81,7 +81,7 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
     setProgress(100);
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
-    // Filter out current word to pool distractors
+    // Filter out current word to pool distractors. Use PROTOTYPES for options.
     const allWords = entries.map(e => e.word);
     const distractors = allWords.filter(w => w.toLowerCase() !== currentWord.word.toLowerCase());
     
@@ -202,17 +202,18 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
   };
 
   const getMaskedSentence = () => {
-     // Robust replace
-     const escaped = currentWord.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+     // Robust replace using wordInSentence
+     const target = currentWord.wordInSentence || currentWord.word;
+     const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      const regex = new RegExp(`(${escaped})`, 'gi');
      
      const parts = currentWord.sentence.split(regex);
      return (
         <span className="text-xl md:text-2xl font-medium leading-relaxed text-md-on-surface">
             {parts.map((part, i) => {
-                if (part.toLowerCase() === currentWord.word.toLowerCase()) {
-                   // If idle, show blank. If answered, show word (colored based on feedback)
-                   const display = feedback !== 'idle' ? currentWord.word : '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
+                if (part.toLowerCase() === target.toLowerCase()) {
+                   // If idle, show blank. If answered, show target word (sentence form)
+                   const display = feedback !== 'idle' ? target : '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
                    return (
                        <span key={i} className={`inline-block min-w-[80px] border-b-2 text-center px-1 font-bold transition-colors ${
                            feedback === 'idle' ? 'border-md-primary text-md-primary' :

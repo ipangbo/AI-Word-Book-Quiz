@@ -183,18 +183,23 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
   };
 
   const getMaskedSentence = () => {
-     // Robust replace: handle case insensitivity
-     const escaped = currentWord.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+     // Use wordInSentence for accurate masking of the context
+     const target = currentWord.wordInSentence || currentWord.word;
+     const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      const regex = new RegExp(`(${escaped})`, 'gi');
      
      const parts = currentWord.sentence.split(regex);
      return (
         <span className="text-xl md:text-2xl font-medium leading-relaxed text-md-on-surface">
             {parts.map((part, i) => {
-                if (part.toLowerCase() === currentWord.word.toLowerCase()) {
+                if (part.toLowerCase() === target.toLowerCase()) {
+                   // If idle, show blank. If answered, show the SENTENCE form (to keep context correct) or Word?
+                   // Prompt says "Highligting logic... match first parameter". 
+                   // Showing the original sentence form makes the sentence grammatically correct.
+                   const display = feedback !== 'idle' ? target : '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
                    return (
                        <span key={i} className="inline-block min-w-[80px] border-b-2 border-md-primary text-center px-1 text-md-primary font-bold">
-                           {feedback !== 'idle' ? currentWord.word : '\u00A0'}
+                           {display}
                        </span>
                    );
                 }

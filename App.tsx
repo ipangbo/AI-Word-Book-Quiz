@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ImportScreen } from './components/ImportScreen';
 import { QuizSetup } from './components/QuizSetup';
 import { QuizSession } from './components/QuizSession';
@@ -21,7 +21,7 @@ import { ToastContainer, ToastType, ToastMessage } from './components/Toast';
 import { WordEntry, QuizConfig, DictationConfig, ClozeConfig, MultipleChoiceConfig, QuizMode, DictationMistake } from './types';
 import { applyTheme, ThemeName, ThemeMode, applyFontSize, FontSizeLevel, FONT_SIZE_KEY } from './utils/theme';
 
-type ScreenName = 'home' | 'review' | 'quiz_select' | 'quiz_setup' | 'quiz_session' | 'dictation_setup' | 'dictation_session' | 'cloze_setup' | 'cloze_session' | 'mc_setup' | 'mc_session' | 'results' | 'settings';
+type ScreenName = 'home' | 'review' | 'quiz_select' | 'quiz_setup' | 'quiz_session' | 'dictation_setup' | 'dictation_session' | 'cloze_setup' | 'cloze_session' | 'mc_setup' | 'mc_session' | 'results';
 
 const App: React.FC = () => {
   const [screen, setScreen] = useState<ScreenName>('home');
@@ -44,6 +44,7 @@ const App: React.FC = () => {
   // UI State
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isEcosystemOpen, setIsEcosystemOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   // Theme Init
@@ -57,10 +58,12 @@ const App: React.FC = () => {
     applyFontSize(savedFontSize);
   }, []);
 
-  // Global Scroll Reset on Screen Change
+  // Global Scroll Reset on Screen Change (only if not opening settings)
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [screen]);
+    if (!isSettingsOpen) {
+        window.scrollTo(0, 0);
+    }
+  }, [screen, isSettingsOpen]);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(2, 11) + Date.now();
@@ -72,19 +75,16 @@ const App: React.FC = () => {
   }, []);
 
   const navigateTo = (target: ScreenName) => {
-    if (target === 'settings') {
-      if (screen !== 'settings') {
-        setPreviousScreen(screen);
-      }
-    }
     setScreen(target);
   };
 
   const handleBack = () => {
+    if (isSettingsOpen) {
+        setIsSettingsOpen(false);
+        return;
+    }
+
     switch (screen) {
-      case 'settings':
-        setScreen(previousScreen);
-        break;
       case 'review':
         setScreen('home');
         break;
@@ -196,9 +196,9 @@ const App: React.FC = () => {
     setScreen('home');
   };
 
-  const showBack = screen !== 'home';
-  const showHelp = screen === 'home';
-  const showSettings = screen !== 'settings';
+  const showBack = isSettingsOpen || screen !== 'home';
+  const showHelp = screen === 'home' && !isSettingsOpen;
+  const showSettings = !isSettingsOpen;
   
   const titleMap: Record<string, string> = {
     home: 'CineVocab',
@@ -213,17 +213,16 @@ const App: React.FC = () => {
     cloze_session: 'Cloze Test',
     mc_session: 'Multiple Choice',
     results: 'Results',
-    settings: 'Settings'
   };
 
   return (
     <div className="min-h-screen bg-md-surface text-md-on-surface font-sans selection:bg-md-primary-container selection:text-md-on-primary-container overflow-x-hidden transition-colors duration-300 pt-20">
       
       <TopBar 
-        title={titleMap[screen]} 
+        title={isSettingsOpen ? 'Settings' : titleMap[screen]} 
         showBack={showBack} 
         onBack={handleBack}
-        onSettings={() => navigateTo('settings')}
+        onSettings={() => setIsSettingsOpen(true)}
         onHelp={() => setIsHelpOpen(true)}
         onEcosystem={() => setIsEcosystemOpen(true)}
         showHelp={showHelp}
@@ -327,16 +326,31 @@ const App: React.FC = () => {
               showToast={showToast}
             />
           )}
-
-          {screen === 'settings' && (
-            <SettingsScreen 
-              key="settings" 
-              onQuickImport={handleDataLoaded} 
-              showToast={showToast} 
-            />
-          )}
         </AnimatePresence>
       </div>
+
+      <AnimatePresence>
+        {isSettingsOpen && (
+            <motion.div 
+                initial={{ opacity: 0, x: '100%' }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: '100%' }}
+                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                className="fixed inset-0 z-40 bg-md-surface pt-20 overflow-y-auto"
+                style={{ willChange: 'transform' }}
+            >
+                <div className="container mx-auto">
+                     <SettingsScreen 
+                        onQuickImport={(d) => {
+                            handleDataLoaded(d);
+                            setIsSettingsOpen(false);
+                        }}
+                        showToast={showToast}
+                     />
+                </div>
+            </motion.div>
+        )}
+      </AnimatePresence>
 
       <HelpModal isOpen={isHelpOpen} onClose={() => setIsHelpOpen(false)} />
       <EcosystemModal isOpen={isEcosystemOpen} onClose={() => setIsEcosystemOpen(false)} />
