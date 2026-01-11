@@ -304,7 +304,7 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
                             autoFocus
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            className="w-full bg-white dark:bg-md-surface-container border-b-2 text-center text-2xl py-3 rounded-t-lg focus:outline-none transition-colors font-medium placeholder:text-md-outline placeholder:opacity-50 border-md-outline focus:border-md-primary text-md-on-surface"
+                            className="w-full bg-transparent border-b-2 text-center text-3xl py-2 focus:outline-none transition-colors font-medium placeholder:text-md-outline/20 border-md-outline/40 focus:border-md-primary text-md-on-surface"
                             placeholder="Type the missing word..."
                             autoComplete="off"
                             autoCorrect="off"
