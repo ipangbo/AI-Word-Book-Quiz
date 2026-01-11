@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WordEntry } from '../types';
 import { ArrowRight, BookOpen, ArrowUp } from 'lucide-react';
 import { speak } from '../utils/tts';
-import { Ripple } from './Ripple';
+import { Ripple } from './common/Ripple';
 
 interface ReviewScreenProps {
   data: WordEntry[];
@@ -34,7 +33,6 @@ export const ReviewScreen: React.FC<ReviewScreenProps> = ({ data, onConfirm }) =
     });
   };
 
-  // Group entries by sentence for display
   const groupedData: Record<string, { sentence: string, translation: string, timestamp: string, words: WordEntry[] }> = {};
   
   data.forEach(entry => {

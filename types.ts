@@ -57,6 +57,10 @@ export type DictationMistake = {
   usedHint?: boolean; // For Cloze mode: true if sentence audio was played
 };
 
+export interface GeneralSettings {
+  historyLimit: number;
+}
+
 export interface DictationGlobalSettings {
   defaultShowPhonetic: boolean;
   defaultShowPos: boolean;

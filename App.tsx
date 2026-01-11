@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImportScreen } from './components/ImportScreen';
@@ -17,7 +16,7 @@ import { QuizSelectionScreen } from './components/QuizSelectionScreen';
 import { SettingsScreen } from './components/SettingsScreen';
 import { HelpModal } from './components/HelpModal';
 import { EcosystemModal } from './components/EcosystemModal';
-import { ToastContainer, ToastType, ToastMessage } from './components/Toast';
+import { ToastContainer, ToastType, ToastMessage } from './components/common/Toast';
 import { WordEntry, QuizConfig, DictationConfig, ClozeConfig, MultipleChoiceConfig, QuizMode, DictationMistake } from './types';
 import { applyTheme, ThemeName, ThemeMode, applyFontSize, FontSizeLevel, FONT_SIZE_KEY } from './utils/theme';
 
@@ -29,25 +28,21 @@ const App: React.FC = () => {
   
   const [data, setData] = useState<WordEntry[]>([]);
   
-  // Quiz State
   const [quizMode, setQuizMode] = useState<QuizMode>('flashcard');
   const [quizConfig, setQuizConfig] = useState<QuizConfig | null>(null);
   const [dictationConfig, setDictationConfig] = useState<DictationConfig | null>(null);
   const [clozeConfig, setClozeConfig] = useState<ClozeConfig | null>(null);
   const [mcConfig, setMcConfig] = useState<MultipleChoiceConfig | null>(null);
   
-  // Results State
   const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
   const [quizResults, setQuizResults] = useState<DictationMistake[]>([]);
   const [sessionEntries, setSessionEntries] = useState<WordEntry[]>([]);
 
-  // UI State
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [isEcosystemOpen, setIsEcosystemOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  // Theme Init
   useEffect(() => {
     const savedTheme = localStorage.getItem('cinevocab_theme_name') as ThemeName || 'violet';
     const savedMode = localStorage.getItem('cinevocab_theme_mode') as ThemeMode || 'system';
@@ -58,7 +53,6 @@ const App: React.FC = () => {
     applyFontSize(savedFontSize);
   }, []);
 
-  // Global Scroll Reset on Screen Change (only if not opening settings)
   useEffect(() => {
     if (!isSettingsOpen) {
         window.scrollTo(0, 0);

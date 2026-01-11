@@ -1,9 +1,8 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Layers, Edit3, Mic, ArrowRight, ListChecks } from 'lucide-react';
 import { QuizMode } from '../types';
-import { Ripple } from './Ripple';
+import { Ripple } from './common/Ripple';
 
 interface QuizSelectionScreenProps {
   onSelect: (mode: QuizMode) => void;
@@ -72,7 +71,6 @@ export const QuizSelectionScreen: React.FC<QuizSelectionScreenProps> = ({ onSele
           >
             <Ripple />
             
-            {/* Header: Icon + Title */}
             <div className="flex items-center gap-4 mb-5 relative z-10">
               <div className={`${mode.colorClass} ${mode.iconColor} w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform`}>
                 {mode.icon}
@@ -82,12 +80,10 @@ export const QuizSelectionScreen: React.FC<QuizSelectionScreenProps> = ({ onSele
               </h3>
             </div>
             
-            {/* Content: Description */}
             <p className="text-md-outline text-sm leading-relaxed mb-8 flex-1 relative z-10">
               {mode.description}
             </p>
 
-            {/* Footer Action */}
             <div className="flex items-center justify-between mt-auto relative z-10">
                 <span className="text-xs font-bold uppercase tracking-widest text-md-primary opacity-0 group-hover:opacity-100 transition-opacity">
                     Start Now

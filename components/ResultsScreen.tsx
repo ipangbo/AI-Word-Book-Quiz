@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, RotateCcw, Home, CheckCircle2, AlertCircle, Ear } from 'lucide-react';
@@ -6,14 +5,14 @@ import confetti from 'canvas-confetti';
 import { WordEntry, DictationMistake } from '../types';
 import { exportFailedWords } from '../utils/parser';
 import { speak } from '../utils/tts';
-import { Ripple } from './Ripple';
-import { ToastType } from './Toast';
-import { Switch } from './Switch';
+import { Ripple } from './common/Ripple';
+import { ToastType } from './common/Toast';
+import { Switch } from './common/Switch';
 
 interface ResultsScreenProps {
   sessionEntries: WordEntry[];
   markedIds: Set<string>;
-  dictationMistakes?: DictationMistake[]; // Now serves as generic result container for Dictation and Cloze
+  dictationMistakes?: DictationMistake[]; 
   onHome: () => void;
   onRestart: () => void;
   showToast: (msg: string, type: ToastType) => void;
@@ -28,13 +27,11 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
     return map;
   }, [dictationMistakes]);
 
-  // State to determine if we should export words that were solved with a hint
   const [includeHintedInExport, setIncludeHintedInExport] = useState(true);
 
   const getResultStatus = (entry: WordEntry): 'correct' | 'mistake' | 'marked' | 'hinted' => {
       const res = resultMap.get(entry.id);
       
-      // Prioritize detailed result info over generic 'marked' set
       if (res) {
           const userClean = (res.userInput || '').trim().toLowerCase();
           const wordClean = (entry.word || '').trim().toLowerCase();
@@ -45,25 +42,21 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
           return 'correct';
       }
 
-      // Fallback for Flashcards (where dictationMistakes is empty or item not in it)
       if (markedIds.has(entry.id)) return 'marked';
       
       return 'correct';
   };
 
-  // Stats calculation
   const total = sessionEntries.length;
   const absoluteFailures = useMemo(() => {
     return sessionEntries.filter(e => {
         const status = getResultStatus(e);
-        // Failures are marked items or explicit mistakes. Hinted correct answers are not "failures" in the score.
         return status === 'marked' || status === 'mistake';
     }).length;
   }, [sessionEntries, resultMap, markedIds]);
   
   const correct = total - absoluteFailures;
 
-  // Celebration Effect
   useEffect(() => {
     if (absoluteFailures === 0 && total > 0) {
       const duration = 3 * 1000;
@@ -80,8 +73,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
         }
 
         const particleCount = 50 * (timeLeft / duration);
-        // since particles fall down, start a bit higher than random
-        // Using default colors for a vibrant, multi-colored festive feel
         confetti({ 
           ...defaults, 
           particleCount, 
@@ -98,7 +89,6 @@ export const ResultsScreen: React.FC<ResultsScreenProps> = ({ sessionEntries, ma
     }
   }, [absoluteFailures, total]);
 
-  // Filter logic for export
   const exportableEntries = sessionEntries.filter(e => {
     const status = getResultStatus(e);
     if (status === 'marked') return true;

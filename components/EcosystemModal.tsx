@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ExternalLink, Globe, Sparkles, BookOpen, Repeat } from 'lucide-react';
-import { Ripple } from './Ripple';
+import { Ripple } from './common/Ripple';
 
 interface EcosystemModalProps {
   isOpen: boolean;
@@ -16,7 +15,7 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
       name: 'CineGlot',
       description: '生词筛选与语境提取。从电影、电视剧字幕文件中快速锁定生词，并保留其原始对白语境。',
       icon: <Globe size={24} />,
-      link: '#', // Placeholder
+      link: '#', 
       color: 'bg-blue-500',
       tag: '数据源'
     },
@@ -43,7 +42,7 @@ export const EcosystemModal: React.FC<EcosystemModalProps> = ({ isOpen, onClose 
       name: 'CineVocab',
       description: '数字化高频复习。将带有语境的生词列表转化为多种互动 Quiz（闪卡、听写、填空、选择），巩固记忆。',
       icon: <Repeat size={24} />,
-      link: null, // Current app
+      link: null, 
       color: 'bg-emerald-500',
       tag: '智能复习',
       isCurrent: true

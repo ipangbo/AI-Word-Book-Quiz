@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, ArrowLeft, HelpCircle, Compass } from 'lucide-react';
-import { Ripple } from './Ripple';
-import { Logo } from './Logo';
+import { Ripple } from './common/Ripple';
+import { Logo } from './common/Logo';
 
 interface TopBarProps {
   title?: string;

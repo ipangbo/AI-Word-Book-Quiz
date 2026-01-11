@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Settings, Play, Shuffle, ListOrdered } from 'lucide-react';
-import { WordEntry, QuizConfig } from '../types';
-import { Ripple } from './Ripple';
-import { ChoiceChip } from './ChoiceChip';
+import { Play } from 'lucide-react';
+import { QuizConfig } from '../types';
+import { Ripple } from './common/Ripple';
+import { SetupOptions } from './quiz/SetupOptions';
 
 interface QuizSetupProps {
   totalWords: number;
@@ -14,11 +13,6 @@ interface QuizSetupProps {
 export const QuizSetup: React.FC<QuizSetupProps> = ({ totalWords, onStart }) => {
   const [count, setCount] = useState<number>(Math.min(10, totalWords));
   const [isRandom, setIsRandom] = useState(false);
-
-  // Quick select options
-  const options = [5, 10, 20, 50].filter(n => n <= totalWords);
-  if (!options.includes(totalWords)) options.push(totalWords);
-  const uniqueOptions = Array.from(new Set(options)).sort((a, b) => a - b);
 
   return (
     <motion.div
@@ -33,42 +27,13 @@ export const QuizSetup: React.FC<QuizSetupProps> = ({ totalWords, onStart }) => 
       </div>
 
       <div className="w-full bg-md-surface-container p-6 rounded-3xl mb-6">
-        <label className="block text-sm font-bold text-md-on-secondary-container mb-4">
-          Number of Words ({totalWords} available)
-        </label>
-        
-        <div className="flex flex-wrap gap-2 mb-6">
-          {uniqueOptions.map(opt => (
-            <ChoiceChip
-              key={opt}
-              label={opt === totalWords ? 'All' : opt.toString()}
-              selected={count === opt}
-              onClick={() => setCount(opt)}
-            />
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between mt-6">
-          <div className="flex items-center gap-3">
-             <div className={`p-2 rounded-full ${isRandom ? 'bg-md-secondary-container text-md-on-secondary-container' : 'text-md-outline'}`}>
-                {isRandom ? <Shuffle size={20} /> : <ListOrdered size={20} />}
-             </div>
-             <div className="flex flex-col">
-                <span className="text-md-on-surface font-medium">Randomize Order</span>
-                <span className="text-xs text-md-outline">{isRandom ? 'Shuffle words' : 'Sequential order'}</span>
-             </div>
-          </div>
-          <button
-            onClick={() => setIsRandom(!isRandom)}
-            className={`w-12 h-7 rounded-full transition-colors relative ${
-              isRandom ? 'bg-md-primary' : 'bg-md-outline/30'
-            }`}
-          >
-             <div className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${
-                isRandom ? 'left-6' : 'left-1'
-             }`} />
-          </button>
-        </div>
+        <SetupOptions 
+          totalWords={totalWords}
+          count={count}
+          onCountChange={setCount}
+          isRandom={isRandom}
+          onRandomChange={setIsRandom}
+        />
       </div>
 
       <button

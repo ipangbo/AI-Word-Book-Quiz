@@ -1,9 +1,14 @@
 
-import { DictationGlobalSettings, ClozeGlobalSettings, MultipleChoiceGlobalSettings } from '../types';
+import { DictationGlobalSettings, ClozeGlobalSettings, MultipleChoiceGlobalSettings, GeneralSettings } from '../types';
 
+const GENERAL_SETTINGS_KEY = 'cinevocab_general_settings';
 const DICTATION_SETTINGS_KEY = 'cinevocab_dictation_settings';
 const CLOZE_SETTINGS_KEY = 'cinevocab_cloze_settings';
 const MC_SETTINGS_KEY = 'cinevocab_mc_settings';
+
+export const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
+  historyLimit: 10,
+};
 
 export const DEFAULT_DICTATION_SETTINGS: DictationGlobalSettings = {
   defaultShowPhonetic: true,
@@ -28,6 +33,24 @@ export const DEFAULT_MC_SETTINGS: MultipleChoiceGlobalSettings = {
   defaultShowPos: true,
   defaultShowDefinition: true,
   defaultShowTranslation: false,
+};
+
+export const getGeneralSettings = (): GeneralSettings => {
+  if (typeof window === 'undefined') return DEFAULT_GENERAL_SETTINGS;
+  const saved = localStorage.getItem(GENERAL_SETTINGS_KEY);
+  if (saved) {
+    try {
+      return { ...DEFAULT_GENERAL_SETTINGS, ...JSON.parse(saved) };
+    } catch (e) {
+      console.error('Failed to parse general settings', e);
+    }
+  }
+  return DEFAULT_GENERAL_SETTINGS;
+};
+
+export const saveGeneralSettings = (settings: GeneralSettings) => {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(GENERAL_SETTINGS_KEY, JSON.stringify(settings));
 };
 
 export const getDictationSettings = (): DictationGlobalSettings => {

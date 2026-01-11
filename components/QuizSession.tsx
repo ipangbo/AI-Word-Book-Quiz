@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Bookmark, ArrowRight, ArrowLeft } from 'lucide-react';
 import { WordEntry, QuizConfig } from '../types';
 import { Flashcard } from './Flashcard';
-import { Ripple } from './Ripple';
+import { Ripple } from './common/Ripple';
 
 interface QuizSessionProps {
   entries: WordEntry[];
@@ -20,11 +19,9 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   const [markedIds, setMarkedIds] = useState<Set<string>>(new Set());
   const [direction, setDirection] = useState(1); // 1 for next, -1 for prev
 
-  // Initialize Queue
   useEffect(() => {
     let q = [...entries];
     if (config.isRandom) {
-      // Fisher-Yates shuffle
       for (let i = q.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [q[i], q[j]] = [q[j], q[i]];
@@ -33,7 +30,6 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
     setQueue(q.slice(0, config.itemCount));
   }, [entries, config]);
 
-  // Reset scroll when index changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentIndex]);

@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, HelpCircle, MessageSquare, Info, Zap } from 'lucide-react';
-import { Ripple } from './Ripple';
+import { X, HelpCircle, MessageSquare, Info, Zap } from 'lucide-react';
+import { Ripple } from './common/Ripple';
 
 interface HelpModalProps {
   isOpen: boolean;

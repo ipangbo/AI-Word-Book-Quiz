@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Eye, X, SkipForward, Pause, Play } from 'lucide-react';
 import { WordEntry, MultipleChoiceConfig, DictationMistake } from '../types';
 import { speak } from '../utils/tts';
-import { getDictationSettings } from '../utils/settings'; // Reusing delays
-import { Ripple } from './Ripple';
-import { Switch } from './Switch';
+import { getDictationSettings } from '../utils/settings';
+import { Ripple } from './common/Ripple';
+import { Switch } from './common/Switch';
 
 interface MultipleChoiceSessionProps {
   entries: WordEntry[];
@@ -25,12 +24,10 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
   const resultsRef = useRef<DictationMistake[]>([]);
   useEffect(() => { resultsRef.current = results; }, [results]);
 
-  // Session State
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<FeedbackState>('idle');
   
-  // Timer State
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(100);
   
@@ -39,17 +36,14 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
   const durationRef = useRef<number>(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Settings
   const settings = useRef(getDictationSettings());
 
-  // Local Config Controls
   const [showPhonetic, setShowPhonetic] = useState(config.showPhonetic);
   const [showPos, setShowPos] = useState(config.showPos);
   const [showDefinition, setShowDefinition] = useState(config.showDefinition);
   const [showTranslation, setShowTranslation] = useState(config.showTranslation);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Initialize Queue
   useEffect(() => {
     let q = [...entries];
     if (config.isRandom) {
@@ -63,39 +57,32 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
 
   const currentWord = queue[currentIndex];
 
-  // Reset internal scroll when index changes
   useEffect(() => {
     if (scrollRef.current) {
         scrollRef.current.scrollTo(0, 0);
     }
   }, [currentIndex]);
 
-  // Generate Options
   useEffect(() => {
     if (!currentWord) return;
     
-    // Reset state for new card
     setFeedback('idle');
     setSelectedOption(null);
     setIsPaused(false);
     setProgress(100);
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
 
-    // Filter out current word to pool distractors. Use PROTOTYPES for options.
     const allWords = entries.map(e => e.word);
     const distractors = allWords.filter(w => w.toLowerCase() !== currentWord.word.toLowerCase());
     
-    // Shuffle distractors
     for (let i = distractors.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [distractors[i], distractors[j]] = [distractors[j], distractors[i]];
     }
 
-    // Select N-1 distractors
     const numOptions = Math.min(config.optionCount, entries.length);
     const selectedDistractors = distractors.slice(0, numOptions - 1);
     
-    // Combine and Shuffle
     const opts = [...selectedDistractors, currentWord.word];
     for (let i = opts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -106,7 +93,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
 
   }, [currentIndex, currentWord, entries, config.optionCount]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
@@ -148,7 +134,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
   };
 
   const handleOptionClick = (option: string) => {
-      // Logic to pause timer on incorrect answers if clicked again
       if (feedback === 'incorrect' && selectedOption === option) {
           if (!isPaused) {
               setIsPaused(true);
@@ -193,16 +178,13 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
     startTimeRef.current = Date.now();
     setProgress(100);
     
-    // Speak word on feedback
     speak(currentWord.word);
 
-    // Start timer loop
     if (requestRef.current) cancelAnimationFrame(requestRef.current);
     requestRef.current = requestAnimationFrame(updateProgress);
   };
 
   const getMaskedSentence = () => {
-     // Robust replace using wordInSentence
      const target = currentWord.wordInSentence || currentWord.word;
      const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      const regex = new RegExp(`(${escaped})`, 'gi');
@@ -212,7 +194,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
         <span className="text-xl md:text-2xl font-medium leading-relaxed text-md-on-surface">
             {parts.map((part, i) => {
                 if (part.toLowerCase() === target.toLowerCase()) {
-                   // If idle, show blank. If answered, show target word (sentence form)
                    const display = feedback !== 'idle' ? target : '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
                    return (
                        <span key={i} className={`inline-block min-w-[80px] border-b-2 text-center px-1 font-bold transition-colors ${
@@ -231,7 +212,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
 
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh] relative">
-      {/* Header */}
       <div className="flex items-center justify-between mb-2 p-4">
         <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
@@ -277,18 +257,14 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <div 
         ref={scrollRef}
         className="flex-1 flex flex-col items-center justify-start p-4 w-full relative overflow-y-auto"
       >
-        
-        {/* Sentence */}
         <div className="w-full bg-white dark:bg-md-surface-container border border-md-surface-container rounded-3xl p-6 md:p-8 mb-6 shadow-sm text-center">
             {getMaskedSentence()}
         </div>
 
-        {/* Hints */}
         <div className="w-full space-y-3 mb-6 text-center min-h-[60px]">
             <AnimatePresence>
                 {showPhonetic && currentWord.phonetic && (
@@ -316,7 +292,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
             </AnimatePresence>
         </div>
 
-        {/* Options Grid */}
         <div className={`grid gap-3 w-full max-w-md ${currentOptions.length > 4 ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {currentOptions.map((option, idx) => {
                 const isCorrectOption = option.toLowerCase() === currentWord.word.toLowerCase();
@@ -344,7 +319,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
                         {feedback === 'idle' && <Ripple />}
                         <div className="relative z-10 flex items-center justify-center gap-2">
                             <span>{option}</span>
-                            {/* Show Pause/Play icon if this is the selected wrong answer */}
                             {isSelected && feedback === 'incorrect' && (
                                 <motion.div 
                                     initial={{ scale: 0 }} 
@@ -356,7 +330,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
                             )}
                         </div>
 
-                        {/* Progress Bar for Selected Option */}
                         {isSelected && feedback !== 'idle' && (
                             <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/5 w-full">
                                 <div 
@@ -372,7 +345,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
             })}
         </div>
         
-        {/* Hint for pausing */}
         {feedback === 'incorrect' && !isPaused && (
             <p className="text-xs text-md-outline mt-4 opacity-60 animate-pulse">
                 Tap the selected option to pause
@@ -381,7 +353,6 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
 
       </div>
 
-      {/* Footer Controls */}
       <div className="p-6 flex items-center gap-4">
         {feedback === 'idle' ? (
             <button

@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Volume2, Eye, X, SkipForward, CheckCircle2, AlertCircle, PauseCircle, Ear } from 'lucide-react';
 import { WordEntry, ClozeConfig, DictationMistake } from '../types';
 import { speak } from '../utils/tts';
-import { getDictationSettings } from '../utils/settings'; // Reuse delays from dictation settings
-import { Ripple } from './Ripple';
-import { Switch } from './Switch';
+import { getDictationSettings } from '../utils/settings';
+import { Ripple } from './common/Ripple';
+import { Switch } from './common/Switch';
 
 interface ClozeSessionProps {
   entries: WordEntry[];
@@ -25,23 +24,19 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
   const resultsRef = useRef<DictationMistake[]>([]);
   useEffect(() => { resultsRef.current = results; }, [results]);
   
-  // Input & State
   const [inputValue, setInputValue] = useState('');
   const [feedback, setFeedback] = useState<FeedbackState>('idle');
   const [hintUsed, setHintUsed] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Timer State
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [feedbackTimeLeft, setFeedbackTimeLeft] = useState(0);
   const [totalFeedbackTime, setTotalFeedbackTime] = useState(0);
 
-  // Use delays from dictation settings for consistency
   const settings = useRef(getDictationSettings());
 
-  // Local Config
   const [showPhonetic, setShowPhonetic] = useState(config.showPhonetic);
   const [showPos, setShowPos] = useState(config.showPos);
   const [showDefinition, setShowDefinition] = useState(config.showDefinition);
@@ -49,7 +44,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Initialize
   useEffect(() => {
     let q = [...entries];
     if (config.isRandom) {
@@ -61,7 +55,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
     setQueue(q.slice(0, config.itemCount));
   }, [entries, config]);
 
-  // Reset scroll on word change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentIndex]);
@@ -73,13 +66,11 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
       setInputValue('');
       setHintUsed(false);
       setIsPaused(false);
-      // Auto-focus input
       const focusTimer = setTimeout(() => inputRef.current?.focus(), 400); 
       return () => clearTimeout(focusTimer);
     }
   }, [currentIndex, currentWord, feedback]);
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -103,10 +94,9 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     
     if (currentIndex < queue.length - 1) {
-      setFeedback('idle'); // Only reset to idle if staying in session
+      setFeedback('idle');
       setCurrentIndex(prev => prev + 1);
     } else {
-      // For the last word, don't reset feedback to 'idle'
       onFinish(resultsRef.current, queue);
     }
   };
@@ -130,7 +120,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
     const target = currentWord.word.trim().toLowerCase();
 
     if (cleanInput === target) {
-      // If hint was used, we still mark it in results to differentiate performance
       if (hintUsed) {
         setResults(prev => [...prev, {
             wordId: currentWord.id,
@@ -156,8 +145,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
     const delay = status === 'correct' ? settings.current.correctDelay : settings.current.incorrectDelay;
     setTotalFeedbackTime(delay);
     setFeedbackTimeLeft(delay);
-
-    // Speak the word on completion
     speak(currentWord.word);
 
     const startTime = Date.now();
@@ -183,7 +170,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
   };
 
   const getMaskedSentence = () => {
-     // Use wordInSentence for accurate masking of the context
      const target = currentWord.wordInSentence || currentWord.word;
      const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      const regex = new RegExp(`(${escaped})`, 'gi');
@@ -193,9 +179,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
         <span className="text-xl md:text-2xl font-medium leading-relaxed text-md-on-surface">
             {parts.map((part, i) => {
                 if (part.toLowerCase() === target.toLowerCase()) {
-                   // If idle, show blank. If answered, show the SENTENCE form (to keep context correct) or Word?
-                   // Prompt says "Highligting logic... match first parameter". 
-                   // Showing the original sentence form makes the sentence grammatically correct.
                    const display = feedback !== 'idle' ? target : '\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0';
                    return (
                        <span key={i} className="inline-block min-w-[80px] border-b-2 border-md-primary text-center px-1 text-md-primary font-bold">
@@ -264,7 +247,6 @@ export const ClozeSession: React.FC<ClozeSessionProps> = ({ entries, config, onF
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 className="w-full flex flex-col items-center"
             >
-                {/* Sentence Area */}
                 <div className="w-full bg-white dark:bg-md-surface-container border border-md-surface-container rounded-3xl p-6 md:p-10 mb-8 shadow-sm text-center">
                     {getMaskedSentence()}
                 </div>

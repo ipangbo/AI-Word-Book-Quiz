@@ -44,6 +44,19 @@ const generateId = () => {
 };
 
 /**
+ * Extracts metadata like \title{} and \subtitle{} from the raw text.
+ */
+export const extractMetadata = (rawText: string): { title?: string, subtitle?: string } => {
+  const titleMatch = rawText.match(/\\title\{([^}]+)\}/);
+  const subtitleMatch = rawText.match(/\\subtitle\{([^}]+)\}/);
+  
+  return {
+    title: titleMatch ? titleMatch[1].trim() : undefined,
+    subtitle: subtitleMatch ? subtitleMatch[1].trim() : undefined
+  };
+};
+
+/**
  * Parses the raw TeX string into structured WordEntry objects.
  * Expects new format: \Word{wordInSentence}{wordPrototype}{pos}{def}[phonetic]
  */

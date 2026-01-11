@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Shuffle, ListOrdered, Settings2 } from 'lucide-react';
+import { Play, Settings2 } from 'lucide-react';
 import { DictationConfig } from '../types';
 import { getDictationSettings } from '../utils/settings';
-import { Ripple } from './Ripple';
-import { Switch } from './Switch';
-import { ChoiceChip } from './ChoiceChip';
+import { Ripple } from './common/Ripple';
+import { Switch } from './common/Switch';
+import { SetupOptions } from './quiz/SetupOptions';
 
 interface DictationSetupProps {
   totalWords: number;
@@ -17,38 +16,31 @@ export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onSt
   const [count, setCount] = useState<number>(Math.min(10, totalWords));
   const [isRandom, setIsRandom] = useState(true);
   
-  // Hint Toggles
   const [showPhonetic, setShowPhonetic] = useState(true);
   const [showPos, setShowPos] = useState(true);
   const [showDefinition, setShowDefinition] = useState(true);
   const [showTranslation, setShowTranslation] = useState(false);
   const [showSentence, setShowSentence] = useState(false);
 
-  // Load defaults
   useEffect(() => {
-      const defaults = getDictationSettings();
-      setShowPhonetic(defaults.defaultShowPhonetic);
-      setShowPos(defaults.defaultShowPos);
-      setShowDefinition(defaults.defaultShowDefinition);
-      setShowTranslation(defaults.defaultShowTranslation);
-      setShowSentence(defaults.defaultShowSentence);
+    const defaults = getDictationSettings();
+    setShowPhonetic(defaults.defaultShowPhonetic);
+    setShowPos(defaults.defaultShowPos);
+    setShowDefinition(defaults.defaultShowDefinition);
+    setShowTranslation(defaults.defaultShowTranslation);
+    setShowSentence(defaults.defaultShowSentence);
   }, []);
 
-  // Quick select options
-  const options = [5, 10, 20, 50].filter(n => n <= totalWords);
-  if (!options.includes(totalWords)) options.push(totalWords);
-  const uniqueOptions = Array.from(new Set(options)).sort((a, b) => a - b);
-
   const handleStart = () => {
-      onStart({
-          itemCount: count,
-          isRandom,
-          showPhonetic,
-          showPos,
-          showDefinition,
-          showTranslation,
-          showSentence
-      });
+    onStart({
+      itemCount: count,
+      isRandom,
+      showPhonetic,
+      showPos,
+      showDefinition,
+      showTranslation,
+      showSentence
+    });
   };
 
   return (
@@ -64,51 +56,27 @@ export const DictationSetup: React.FC<DictationSetupProps> = ({ totalWords, onSt
       </div>
 
       <div className="w-full bg-md-surface-container p-6 rounded-3xl mb-6 shadow-sm">
-        
-        {/* Count Selection */}
-        <div className="mb-6 border-b border-md-outline/10 pb-6">
-            <label className="block text-sm font-bold text-md-on-secondary-container mb-4">
-            Number of Words
-            </label>
-            <div className="flex flex-wrap gap-2">
-            {uniqueOptions.map(opt => (
-                <ChoiceChip
-                  key={opt}
-                  label={opt === totalWords ? 'All' : opt.toString()}
-                  selected={count === opt}
-                  onClick={() => setCount(opt)}
-                />
-            ))}
-            </div>
-        </div>
-
-        {/* Randomize */}
-        <div className="flex items-center justify-between mb-6 border-b border-md-outline/10 pb-6">
-          <div className="flex items-center gap-3">
-             <div className={`p-2 rounded-full ${isRandom ? 'bg-md-secondary-container text-md-on-secondary-container' : 'text-md-outline'}`}>
-                {isRandom ? <Shuffle size={20} /> : <ListOrdered size={20} />}
-             </div>
-             <div className="flex flex-col">
-                <span className="text-md-on-surface font-medium">Randomize Order</span>
-             </div>
-          </div>
-          <Switch checked={isRandom} onChange={setIsRandom} />
-        </div>
+        <SetupOptions 
+          totalWords={totalWords}
+          count={count}
+          onCountChange={setCount}
+          isRandom={isRandom}
+          onRandomChange={setIsRandom}
+        />
 
         {/* Hints Config */}
         <div>
-            <div className="flex items-center gap-2 mb-3 text-md-primary">
-                <Settings2 size={18} />
-                <span className="text-sm font-bold uppercase tracking-wider">Default Hints</span>
-            </div>
-            <div className="space-y-1">
-                <Switch checked={showPhonetic} onChange={setShowPhonetic} label="Show Phonetic [əˈnʌðər]" />
-                <Switch checked={showDefinition} onChange={setShowDefinition} label="Show English Definition" />
-                <Switch checked={showTranslation} onChange={setShowTranslation} label="Show Translation (CN)" />
-                <Switch checked={showSentence} onChange={setShowSentence} label="Show Masked Sentence" />
-            </div>
+          <div className="flex items-center gap-2 mb-3 text-md-primary">
+            <Settings2 size={18} />
+            <span className="text-sm font-bold uppercase tracking-wider">Default Hints</span>
+          </div>
+          <div className="space-y-1">
+            <Switch checked={showPhonetic} onChange={setShowPhonetic} label="Show Phonetic [əˈnʌðər]" />
+            <Switch checked={showDefinition} onChange={setShowDefinition} label="Show English Definition" />
+            <Switch checked={showTranslation} onChange={setShowTranslation} label="Show Translation (CN)" />
+            <Switch checked={showSentence} onChange={setShowSentence} label="Show Masked Sentence" />
+          </div>
         </div>
-
       </div>
 
       <button

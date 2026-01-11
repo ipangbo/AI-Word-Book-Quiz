@@ -1,12 +1,11 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Volume2, Eye, X, SkipForward, CheckCircle2, AlertCircle, PauseCircle } from 'lucide-react';
 import { WordEntry, DictationConfig, DictationMistake } from '../types';
 import { speak } from '../utils/tts';
 import { getDictationSettings } from '../utils/settings';
-import { Ripple } from './Ripple';
-import { Switch } from './Switch';
+import { Ripple } from './common/Ripple';
+import { Switch } from './common/Switch';
 
 interface DictationSessionProps {
   entries: WordEntry[];
@@ -22,29 +21,23 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   const [currentIndex, setCurrentIndex] = useState(0);
   const [mistakes, setMistakes] = useState<DictationMistake[]>([]);
   
-  // Use a ref to access the latest mistakes inside setTimeout closures
   const mistakesRef = useRef<DictationMistake[]>([]);
-
   useEffect(() => {
     mistakesRef.current = mistakes;
   }, [mistakes]);
   
-  // Input State
   const [inputValue, setInputValue] = useState('');
   const [feedback, setFeedback] = useState<FeedbackState>('idle');
   const inputRef = useRef<HTMLInputElement>(null);
   
-  // Timer State for Feedback
   const [isPaused, setIsPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [feedbackTimeLeft, setFeedbackTimeLeft] = useState(0);
   const [totalFeedbackTime, setTotalFeedbackTime] = useState(0);
 
-  // Settings for feedback delays
   const settings = useRef(getDictationSettings());
 
-  // Display State (Local override of config)
   const [showPhonetic, setShowPhonetic] = useState(config.showPhonetic);
   const [showPos, setShowPos] = useState(config.showPos);
   const [showDefinition, setShowDefinition] = useState(config.showDefinition);
@@ -53,7 +46,6 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Initialize Queue
   useEffect(() => {
     let q = [...entries];
     if (config.isRandom) {
@@ -65,31 +57,26 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
     setQueue(q.slice(0, config.itemCount));
   }, [entries, config]);
 
-  // Reset scroll on word change
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentIndex]);
 
   const currentWord = queue[currentIndex];
 
-  // Auto-speak and focus handling
   useEffect(() => {
     if (currentWord && feedback === 'idle') {
       speak(currentWord.word);
       setInputValue('');
       setIsPaused(false);
-      
       const focusTimer = setTimeout(() => {
         if (inputRef.current) {
           inputRef.current.focus();
         }
       }, 400); 
-      
       return () => clearTimeout(focusTimer);
     }
   }, [currentIndex, currentWord, feedback]);
 
-  // Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.altKey && (e.key === 'r' || e.key === 'R')) {
@@ -101,7 +88,6 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentWord]);
 
-  // Cleanup timer
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -123,10 +109,9 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
     
     if (currentIndex < queue.length - 1) {
-      setFeedback('idle'); // Only reset to idle if staying in session
+      setFeedback('idle');
       setCurrentIndex(prev => prev + 1);
     } else {
-      // For the last word, don't reset feedback to 'idle' to avoid triggering the auto-speak useEffect
       onFinish(mistakesRef.current, queue);
     }
   };
@@ -166,12 +151,9 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
     const delay = status === 'correct' ? settings.current.correctDelay : settings.current.incorrectDelay;
     setTotalFeedbackTime(delay);
     setFeedbackTimeLeft(delay);
-
-    // Only replay the target word, no "Correct/Incorrect" voiceover
     speak(currentWord.word);
 
     const startTime = Date.now();
-    
     progressIntervalRef.current = setInterval(() => {
         if (isPaused) return;
         const elapsed = Date.now() - startTime;
@@ -186,7 +168,6 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
 
   const handlePauseToggle = () => {
       if (feedback === 'idle') return;
-      
       if (!isPaused) {
           setIsPaused(true);
           if (timerRef.current) clearTimeout(timerRef.current);
@@ -199,7 +180,6 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   };
 
   const getMaskedSentence = () => {
-     // Use wordInSentence for accurate masking
      const target = currentWord.wordInSentence || currentWord.word;
      const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
      const regex = new RegExp(escaped, 'gi');
