@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+
+import React, { useState, useCallback, useEffect, useLayoutEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImportScreen } from './components/ImportScreen';
 import { QuizSetup } from './components/QuizSetup';
@@ -43,10 +44,14 @@ const App: React.FC = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  useEffect(() => {
+  // useLayoutEffect runs synchronously immediately after DOM updates but before paint.
+  // This is critical for applying the theme without a visual flash of the default colors.
+  useLayoutEffect(() => {
     const savedTheme = localStorage.getItem('cinevocab_theme_name') as ThemeName || 'violet';
     const savedMode = localStorage.getItem('cinevocab_theme_mode') as ThemeMode || 'system';
     const savedColor = localStorage.getItem('cinevocab_custom_color') || undefined;
+    
+    // Apply theme logic
     applyTheme(savedTheme, savedMode, savedColor);
 
     const savedFontSize = localStorage.getItem(FONT_SIZE_KEY) as FontSizeLevel || 'medium';

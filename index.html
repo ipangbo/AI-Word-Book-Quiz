@@ -2,60 +2,70 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- ADDED viewport-fit=cover -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
-    <!-- iOS PWA & Status Bar Configuration -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="CineVocab" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     
     <!-- 
-       CRITICAL FIX: 
-       We define specific meta tags for light and dark mode initially so Safari knows what to do 
-       BEFORE JS runs. The JS will later take over control of 'theme-color-meta' for dynamic switching.
+       FIX: We initialize this with a placeholder. The script below will IMMEDIATELLY update it 
+       before the browser parses the body, ensuring the correct color is used for the first paint.
     -->
-    <meta name="theme-color" content="#FDF7FF" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#141218" media="(prefers-color-scheme: dark)" />
-    <!-- This ID is used by our JS to update the color dynamically later -->
-    <meta name="theme-color" content="#FDF7FF" id="theme-color-meta" />
+    <meta name="theme-color" content="#ffffff" id="theme-color-meta" />
 
-    <!-- Favicons for Browser Tabs and Safari/iOS Home Screen -->
     <link rel="icon" type="image/png" href="https://tc1.ipangbo.cn/s3/cropped-icanicon-1.png" />
     <link rel="apple-touch-icon" href="https://tc1.ipangbo.cn/s3/cropped-icanicon-1.png" />
 
     <title>CineVocab</title>
     
-    <!-- PRE-LOAD THEME SCRIPT -->
+    <!-- ENHANCED PRE-LOAD THEME SCRIPT -->
     <script>
       (function() {
         try {
-          var metaTag = document.getElementById('theme-color-meta');
+          // 1. Configuration Data (Synced with utils/theme.ts)
           var savedMode = localStorage.getItem('cinevocab_theme_mode');
           var savedTheme = localStorage.getItem('cinevocab_theme_name') || 'violet';
+          var savedCustomColor = localStorage.getItem('cinevocab_custom_color');
           
           var lightSurfaces = {
-            'violet': '#FDF7FF', 'ocean': '#F4FBFC', 'nature': '#F6FBF3', 'volcano': '#FFF8F6', 'custom': '#FAFAFA'
+            'violet': '#FDF7FF', 'ocean': '#F4FBFC', 'nature': '#F6FBF3', 'volcano': '#FFF8F6'
           };
           var darkSurfaces = {
-            'violet': '#141218', 'ocean': '#001F26', 'nature': '#10140F', 'volcano': '#201A19', 'custom': '#141414'
+            'violet': '#141218', 'ocean': '#001F26', 'nature': '#10140F', 'volcano': '#201A19'
           };
 
+          // 2. Determine Mode
           var isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          // Logic: If saved is 'dark', OR saved is 'system' and system is dark, OR no save and system is dark.
           var isDark = savedMode === 'dark' || (savedMode === 'system' && isSystemDark) || (!savedMode && isSystemDark);
 
-          var colorMap = isDark ? darkSurfaces : lightSurfaces;
-          var initialColor = colorMap[savedTheme] || (isDark ? '#141218' : '#FDF7FF');
-
-          if (metaTag) {
-            metaTag.setAttribute('content', initialColor);
+          // 3. Determine Color
+          var targetColor;
+          if (savedTheme === 'custom' && savedCustomColor) {
+             // Fallback for custom theme estimation in pre-load (simplified)
+             targetColor = isDark ? '#141414' : '#FAFAFA'; 
+          } else {
+             var map = isDark ? darkSurfaces : lightSurfaces;
+             targetColor = map[savedTheme] || (isDark ? '#141218' : '#FDF7FF');
           }
+
+          // 4. Apply to DOM immediately (Critical for Safari PWA Status Bar)
+          var metaTag = document.getElementById('theme-color-meta');
+          if (metaTag) {
+            metaTag.setAttribute('content', targetColor);
+          }
+
+          // 5. Apply Backgrounds
+          document.documentElement.style.backgroundColor = targetColor;
+          document.body ? (document.body.style.backgroundColor = targetColor) : null;
           
-          // Force immediate paint
-          document.documentElement.style.backgroundColor = initialColor;
-          document.body.style.backgroundColor = initialColor;
-          
+          // 6. INJECT CSS VARIABLES IMMEDIATELY
+          // This prevents the "Purple Flash" by overriding the :root variables 
+          // before the browser paints the default CSS.
+          var style = document.createElement('style');
+          style.innerHTML = ':root { --md-surface: ' + targetColor + ' !important; background-color: ' + targetColor + ' !important; }';
+          document.head.appendChild(style);
+
           if (isDark) {
             document.documentElement.classList.add('dark');
           }
@@ -93,14 +103,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
       /* 
-         CSS VARIABLES: 
-         We provide defaults for BOTH light and dark modes in CSS.
-         This ensures the browser paints the correct background COLOR 
-         even before JavaScript runs, preventing the "White Flash".
+         Default variables are defined here, BUT the pre-load script above 
+         will inject a style tag with !important overrides for --md-surface
+         based on local storage. This ensures the correct background color
+         is painted on the very first frame.
       */
       :root {
-        /* Default Light Theme (Violet) */
-        --md-surface: #FDF7FF;
+        --md-surface: #FDF7FF; 
         --md-surface-container: #F3EDF7;
         --md-on-surface: #1D1B20;
         --md-primary: #6750A4;
@@ -114,38 +123,16 @@
         --md-error-container: #F9DEDC;
       }
 
-      @media (prefers-color-scheme: dark) {
-        :root {
-          /* Default Dark Theme (Violet) - Matches logic in theme.ts */
-          --md-surface: #141218;
-          --md-surface-container: #211F26;
-          --md-on-surface: #E6E1E5;
-          --md-primary: #D0BCFF;
-          --md-on-primary: #381E72;
-          --md-primary-container: #4F378B;
-          --md-on-primary-container: #EADDFF;
-          --md-secondary-container: #4A4458;
-          --md-on-secondary-container: #E8DEF8;
-          --md-outline: #938F99;
-          --md-error: #F2B8B5;
-          --md-error-container: #8C1D18;
-        }
-      }
-
       html {
         min-height: 100%;
-        /* Use the variable which now adapts to media queries automatically */
         background-color: var(--md-surface);
-        /* Critical for removing tap highlight on mobile */
         -webkit-tap-highlight-color: transparent;
       }
 
       body {
         background-color: var(--md-surface);
         color: var(--md-on-surface);
-        /* Note: We removed the background-color transition to prevent 
-           flashing when the CSS media query takes effect vs JS loading. 
-           We only animate interactions now. */
+        /* Remove transitions on background to prevent flashing during hydration */
         transition: color 0.3s ease, border-color 0.3s ease;
         overscroll-behavior-y: none;
         min-height: 100vh;
@@ -200,6 +187,7 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
