@@ -210,13 +210,18 @@ export const applyTheme = (themeName: ThemeName, mode: ThemeMode, customColor?: 
     colors = source[themeName as keyof typeof themes] || (isDark ? darkThemes.violet : themes.violet);
   }
 
+  // 1. Set CSS Variables
   Object.entries(colors).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
 
-  // --- IOS FIX: DYNAMIC META THEME COLOR ---
-  // This ensures the status bar matches the app theme on iOS Safari and PWAs
+  // 2. IOS FIX: Direct Body Background & Meta Tag
+  // Safari on iOS PWA often relies on the actual body background color for overscroll areas,
+  // and sometimes won't update the status bar immediately if only CSS vars change.
+  // We explicitly set the style property to force a repaint.
   const surfaceColor = colors['--md-surface'];
+  document.body.style.backgroundColor = surfaceColor;
+
   const metaThemeColor = document.getElementById('theme-color-meta') || document.querySelector('meta[name="theme-color"]');
   if (metaThemeColor) {
       metaThemeColor.setAttribute('content', surfaceColor);
