@@ -215,26 +215,29 @@ export const applyTheme = (themeName: ThemeName, mode: ThemeMode, customColor?: 
     root.style.setProperty(key, value);
   });
 
-  // 2. IOS FIX: Direct Body Background & Meta Tag
-  // Safari on iOS PWA often relies on the actual body background color for overscroll areas,
-  // and sometimes won't update the status bar immediately if only CSS vars change.
-  // We explicitly set the style property to force a repaint.
-  // CRITICAL FIX: Also set documentElement (html) background to ensure viewport-fit=cover
-  // works correctly for the status bar area.
+  // 2. IOS FIX: Nuke and Pave Meta Tags
+  // To fix the stubborn iOS PWA status bar color (Safe Area), we must
+  // REMOVE all existing theme-color tags (especially those with media queries
+  // which we added in index.html to prevent white flash) and append a FRESH one.
+  // This forces Safari to re-evaluate the status bar color.
+  
   const surfaceColor = colors['--md-surface'];
+  
+  // Remove ALL existing meta tags for theme-color
+  const existingMetas = document.querySelectorAll('meta[name="theme-color"]');
+  existingMetas.forEach(meta => meta.remove());
+
+  // Create a clean new one
+  const newMeta = document.createElement('meta');
+  newMeta.name = 'theme-color';
+  newMeta.content = surfaceColor;
+  // We can add the ID back if we want, but "nuke and pave" is safer
+  newMeta.id = 'theme-color-meta'; 
+  document.head.appendChild(newMeta);
+
+  // 3. Force background on body and html (for overscroll/bounce effect)
   document.body.style.backgroundColor = surfaceColor;
   document.documentElement.style.backgroundColor = surfaceColor;
-
-  const metaThemeColor = document.getElementById('theme-color-meta') || document.querySelector('meta[name="theme-color"]');
-  if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', surfaceColor);
-  } else {
-      const meta = document.createElement('meta');
-      meta.name = 'theme-color';
-      meta.content = surfaceColor;
-      meta.id = 'theme-color-meta';
-      document.head.appendChild(meta);
-  }
 };
 
 export const applyFontSize = (level: FontSizeLevel) => {
