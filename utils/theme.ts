@@ -219,8 +219,11 @@ export const applyTheme = (themeName: ThemeName, mode: ThemeMode, customColor?: 
   // Safari on iOS PWA often relies on the actual body background color for overscroll areas,
   // and sometimes won't update the status bar immediately if only CSS vars change.
   // We explicitly set the style property to force a repaint.
+  // CRITICAL FIX: Also set documentElement (html) background to ensure viewport-fit=cover
+  // works correctly for the status bar area.
   const surfaceColor = colors['--md-surface'];
   document.body.style.backgroundColor = surfaceColor;
+  document.documentElement.style.backgroundColor = surfaceColor;
 
   const metaThemeColor = document.getElementById('theme-color-meta') || document.querySelector('meta[name="theme-color"]');
   if (metaThemeColor) {

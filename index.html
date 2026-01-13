@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <!-- ADDED viewport-fit=cover -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
     <!-- iOS PWA & Status Bar Configuration -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -46,6 +47,7 @@
           
           // Also set background immediately to avoid white flash in body
           document.documentElement.style.backgroundColor = initialColor;
+          document.body.style.backgroundColor = initialColor;
         } catch (e) { console.error('Theme preload failed', e); }
       })();
     </script>
@@ -95,12 +97,23 @@
         --md-error-container: #F9DEDC;
       }
 
+      html {
+        min-height: 100%;
+        /* Ensure html background matches body for overscroll areas */
+        background-color: var(--md-surface);
+      }
+
       body {
         background-color: var(--md-surface);
         color: var(--md-on-surface);
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         /* Prevent iOS momentum scrolling bounce on body to make app feel native */
         overscroll-behavior-y: none;
+        min-height: 100vh;
+        /* Padding for safe areas is handled by TopBar/Layout usually, 
+           but this ensures content doesn't get hidden behind notch if padding is missing */
+        padding-top: env(safe-area-inset-top); 
+        padding-bottom: env(safe-area-inset-bottom);
       }
       
       input, button, div {
