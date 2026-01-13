@@ -8,9 +8,16 @@
     <!-- iOS PWA & Status Bar Configuration -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="CineVocab" />
-    <!-- 'default' allows theme-color to control the status bar color on modern iOS -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <!-- Placeholder, will be updated by script immediately -->
+    
+    <!-- 
+       CRITICAL FIX: 
+       We define specific meta tags for light and dark mode initially so Safari knows what to do 
+       BEFORE JS runs. The JS will later take over control of 'theme-color-meta' for dynamic switching.
+    -->
+    <meta name="theme-color" content="#FDF7FF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141218" media="(prefers-color-scheme: dark)" />
+    <!-- This ID is used by our JS to update the color dynamically later -->
     <meta name="theme-color" content="#FDF7FF" id="theme-color-meta" />
 
     <!-- Favicons for Browser Tabs and Safari/iOS Home Screen -->
@@ -19,7 +26,7 @@
 
     <title>CineVocab</title>
     
-    <!-- PRE-LOAD THEME SCRIPT: Prevents "White Flash" on iOS by setting color before React loads -->
+    <!-- PRE-LOAD THEME SCRIPT -->
     <script>
       (function() {
         try {
@@ -27,7 +34,6 @@
           var savedMode = localStorage.getItem('cinevocab_theme_mode');
           var savedTheme = localStorage.getItem('cinevocab_theme_name') || 'violet';
           
-          // Simple mapping of default surface colors for pre-load (matches utils/theme.ts)
           var lightSurfaces = {
             'violet': '#FDF7FF', 'ocean': '#F4FBFC', 'nature': '#F6FBF3', 'volcano': '#FFF8F6', 'custom': '#FAFAFA'
           };
@@ -36,6 +42,7 @@
           };
 
           var isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          // Logic: If saved is 'dark', OR saved is 'system' and system is dark, OR no save and system is dark.
           var isDark = savedMode === 'dark' || (savedMode === 'system' && isSystemDark) || (!savedMode && isSystemDark);
 
           var colorMap = isDark ? darkSurfaces : lightSurfaces;
@@ -45,9 +52,13 @@
             metaTag.setAttribute('content', initialColor);
           }
           
-          // Also set background immediately to avoid white flash in body
+          // Force immediate paint
           document.documentElement.style.backgroundColor = initialColor;
           document.body.style.backgroundColor = initialColor;
+          
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+          }
         } catch (e) { console.error('Theme preload failed', e); }
       })();
     </script>
@@ -81,8 +92,14 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
+      /* 
+         CSS VARIABLES: 
+         We provide defaults for BOTH light and dark modes in CSS.
+         This ensures the browser paints the correct background COLOR 
+         even before JavaScript runs, preventing the "White Flash".
+      */
       :root {
-        /* Default Theme (Violet) - Fallback */
+        /* Default Light Theme (Violet) */
         --md-surface: #FDF7FF;
         --md-surface-container: #F3EDF7;
         --md-on-surface: #1D1B20;
@@ -97,21 +114,41 @@
         --md-error-container: #F9DEDC;
       }
 
+      @media (prefers-color-scheme: dark) {
+        :root {
+          /* Default Dark Theme (Violet) - Matches logic in theme.ts */
+          --md-surface: #141218;
+          --md-surface-container: #211F26;
+          --md-on-surface: #E6E1E5;
+          --md-primary: #D0BCFF;
+          --md-on-primary: #381E72;
+          --md-primary-container: #4F378B;
+          --md-on-primary-container: #EADDFF;
+          --md-secondary-container: #4A4458;
+          --md-on-secondary-container: #E8DEF8;
+          --md-outline: #938F99;
+          --md-error: #F2B8B5;
+          --md-error-container: #8C1D18;
+        }
+      }
+
       html {
         min-height: 100%;
-        /* Ensure html background matches body for overscroll areas */
+        /* Use the variable which now adapts to media queries automatically */
         background-color: var(--md-surface);
+        /* Critical for removing tap highlight on mobile */
+        -webkit-tap-highlight-color: transparent;
       }
 
       body {
         background-color: var(--md-surface);
         color: var(--md-on-surface);
-        transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-        /* Prevent iOS momentum scrolling bounce on body to make app feel native */
+        /* Note: We removed the background-color transition to prevent 
+           flashing when the CSS media query takes effect vs JS loading. 
+           We only animate interactions now. */
+        transition: color 0.3s ease, border-color 0.3s ease;
         overscroll-behavior-y: none;
         min-height: 100vh;
-        /* Padding for safe areas is handled by TopBar/Layout usually, 
-           but this ensures content doesn't get hidden behind notch if padding is missing */
         padding-top: env(safe-area-inset-top); 
         padding-bottom: env(safe-area-inset-bottom);
       }
@@ -163,7 +200,6 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>
