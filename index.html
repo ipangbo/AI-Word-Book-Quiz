@@ -1,21 +1,65 @@
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    
+    <!-- iOS PWA & Status Bar Configuration -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="CineVocab" />
+    <!-- 'default' allows theme-color to control the status bar color on modern iOS -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- Placeholder, will be updated by script immediately -->
+    <meta name="theme-color" content="#FDF7FF" id="theme-color-meta" />
+
+    <!-- Favicons for Browser Tabs and Safari/iOS Home Screen -->
+    <link rel="icon" type="image/png" href="https://tc1.ipangbo.cn/s3/cropped-icanicon-1.png" />
+    <link rel="apple-touch-icon" href="https://tc1.ipangbo.cn/s3/cropped-icanicon-1.png" />
+
     <title>CineVocab</title>
+    
+    <!-- PRE-LOAD THEME SCRIPT: Prevents "White Flash" on iOS by setting color before React loads -->
+    <script>
+      (function() {
+        try {
+          var metaTag = document.getElementById('theme-color-meta');
+          var savedMode = localStorage.getItem('cinevocab_theme_mode');
+          var savedTheme = localStorage.getItem('cinevocab_theme_name') || 'violet';
+          
+          // Simple mapping of default surface colors for pre-load (matches utils/theme.ts)
+          var lightSurfaces = {
+            'violet': '#FDF7FF', 'ocean': '#F4FBFC', 'nature': '#F6FBF3', 'volcano': '#FFF8F6', 'custom': '#FAFAFA'
+          };
+          var darkSurfaces = {
+            'violet': '#141218', 'ocean': '#001F26', 'nature': '#10140F', 'volcano': '#201A19', 'custom': '#141414'
+          };
+
+          var isSystemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark = savedMode === 'dark' || (savedMode === 'system' && isSystemDark) || (!savedMode && isSystemDark);
+
+          var colorMap = isDark ? darkSurfaces : lightSurfaces;
+          var initialColor = colorMap[savedTheme] || (isDark ? '#141218' : '#FDF7FF');
+
+          if (metaTag) {
+            metaTag.setAttribute('content', initialColor);
+          }
+          
+          // Also set background immediately to avoid white flash in body
+          document.documentElement.style.backgroundColor = initialColor;
+        } catch (e) { console.error('Theme preload failed', e); }
+      })();
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class', // Enable class-based dark mode (though we mostly use CSS vars)
+        darkMode: 'class', 
         theme: {
           extend: {
             fontFamily: {
               sans: ['Roboto', 'sans-serif'],
             },
             colors: {
-              // Using CSS variables for dynamic theming
               'md-surface': 'var(--md-surface)',
               'md-surface-container': 'var(--md-surface-container)',
               'md-on-surface': 'var(--md-on-surface)',
@@ -36,7 +80,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
       :root {
-        /* Default Theme (Violet) */
+        /* Default Theme (Violet) - Fallback */
         --md-surface: #FDF7FF;
         --md-surface-container: #F3EDF7;
         --md-on-surface: #1D1B20;
@@ -54,24 +98,21 @@
       body {
         background-color: var(--md-surface);
         color: var(--md-on-surface);
-        /* Global smooth transition for theme switching */
         transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        /* Prevent iOS momentum scrolling bounce on body to make app feel native */
+        overscroll-behavior-y: none;
       }
       
-      /* Ensure inputs and buttons transition smoothly too */
       input, button, div {
         transition-property: background-color, color, border-color, box-shadow;
         transition-duration: 0.3s;
         transition-timing-function: ease;
       }
 
-      /* FIX: Override Tailwind Preflight Default Border Color for Dark Mode */
-      /* The default #e5e7eb is too bright for dark themes, causing "white borders" */
       html.dark *, html.dark ::before, html.dark ::after {
-        border-color: #374151; /* gray-700: A neutral dark grey */
+        border-color: #374151; 
       }
 
-      /* Custom scrollbar for a cleaner look */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -87,7 +128,6 @@
         background: var(--md-primary);
       }
 
-      /* Ripple Animation */
       @keyframes ripple {
         to {
           transform: scale(4);

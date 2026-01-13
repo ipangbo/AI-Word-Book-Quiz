@@ -31,7 +31,9 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   }, [entries, config]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Reset scroll when card changes
+    const scrollContainer = document.getElementById('card-scroll-container');
+    if (scrollContainer) scrollContainer.scrollTop = 0;
   }, [currentIndex]);
 
   if (queue.length === 0) return null;
@@ -71,7 +73,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   return (
     <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh]">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6 p-4">
+      <div className="flex items-center gap-4 mb-6 p-4 shrink-0">
         <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
@@ -98,27 +100,32 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
       </div>
 
       {/* Card Area */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentCard.id}
-            initial={{ x: direction * 50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: direction * -50, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="w-full flex justify-center"
-          >
-            <Flashcard 
-              data={currentCard} 
-              isFlipped={isFlipped} 
-              onFlip={() => setIsFlipped(!isFlipped)} 
-            />
-          </motion.div>
-        </AnimatePresence>
+      <div 
+        id="card-scroll-container"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 w-full"
+      >
+        <div className="min-h-full flex flex-col items-center justify-center py-4">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentCard.id}
+              initial={{ x: direction * 50, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: direction * -50, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="w-full flex justify-center"
+            >
+              <Flashcard 
+                data={currentCard} 
+                isFlipped={isFlipped} 
+                onFlip={() => setIsFlipped(!isFlipped)} 
+              />
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Controls */}
-      <div className="p-6 flex items-center justify-between gap-4">
+      <div className="p-6 flex items-center justify-between gap-4 shrink-0 bg-md-surface/90 backdrop-blur-sm z-10">
         <button
           onClick={toggleMark}
           className={`relative overflow-hidden flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 font-medium transition-all ${

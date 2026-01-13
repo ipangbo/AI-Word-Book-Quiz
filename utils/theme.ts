@@ -213,6 +213,20 @@ export const applyTheme = (themeName: ThemeName, mode: ThemeMode, customColor?: 
   Object.entries(colors).forEach(([key, value]) => {
     root.style.setProperty(key, value);
   });
+
+  // --- IOS FIX: DYNAMIC META THEME COLOR ---
+  // This ensures the status bar matches the app theme on iOS Safari and PWAs
+  const surfaceColor = colors['--md-surface'];
+  const metaThemeColor = document.getElementById('theme-color-meta') || document.querySelector('meta[name="theme-color"]');
+  if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', surfaceColor);
+  } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = surfaceColor;
+      meta.id = 'theme-color-meta';
+      document.head.appendChild(meta);
+  }
 };
 
 export const applyFontSize = (level: FontSizeLevel) => {

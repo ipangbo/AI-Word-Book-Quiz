@@ -121,7 +121,7 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
 
             {/* Footer */}
             <div className="p-4 text-center text-[10px] text-md-outline uppercase tracking-widest font-bold bg-md-surface-container/20">
-              CineVocab Material v1.0 • 语境驱动学习
+              CineVocab Material v1.2 • 语境驱动学习
             </div>
           </motion.div>
         </div>

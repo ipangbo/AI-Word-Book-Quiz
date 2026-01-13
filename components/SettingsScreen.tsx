@@ -195,7 +195,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onQuickImport, s
               className="text-lg text-md-on-surface cursor-default select-none active:scale-95 transition-transform"
               onClick={handleVersionClick}
             >
-              <span className="font-bold">CineVocab</span> v1.1.0
+              <span className="font-bold">CineVocab</span> v1.2.0
             </p>
           </div>
         </div>
