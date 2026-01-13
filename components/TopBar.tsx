@@ -27,6 +27,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
 
+  // Reset visibility when navigating to a new screen/title (e.g. Opening Settings)
+  useEffect(() => {
+    setIsVisible(true);
+  }, [title]);
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;

@@ -59,6 +59,18 @@ const App: React.FC = () => {
     }
   }, [screen, isSettingsOpen]);
 
+  // FIX: Lock body scroll when settings is open to prevent double scrollbars
+  useEffect(() => {
+    if (isSettingsOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isSettingsOpen]);
+
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(2, 11) + Date.now();
     setToasts(prev => [...prev, { id, message, type }]);
