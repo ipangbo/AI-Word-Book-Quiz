@@ -62,7 +62,9 @@
           // 6. INJECT CSS VARIABLES IMMEDIATELY
           // This prevents the "Purple Flash" by overriding the :root variables 
           // before the browser paints the default CSS.
+          // IMPORTANT: We give this an ID so React can remove it later to allow dynamic switching.
           var style = document.createElement('style');
+          style.id = 'theme-critical-styles'; 
           style.innerHTML = ':root { --md-surface: ' + targetColor + ' !important; background-color: ' + targetColor + ' !important; }';
           document.head.appendChild(style);
 

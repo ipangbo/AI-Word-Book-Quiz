@@ -158,6 +158,15 @@ export const getSystemMode = (): 'light' | 'dark' => {
 
 export const applyTheme = (themeName: ThemeName, mode: ThemeMode, customColor?: string) => {
   const root = document.documentElement;
+  
+  // FIX: Remove the critical style tag injected by index.html for preventing white flash.
+  // Once the app is running (JS is executing applyTheme), we no longer need the hardcoded
+  // !important styles, and they actually prevent dynamic theme switching.
+  const criticalStyle = document.getElementById('theme-critical-styles');
+  if (criticalStyle) {
+    criticalStyle.remove();
+  }
+
   let colors: ThemeColors;
   
   // Resolve mode
