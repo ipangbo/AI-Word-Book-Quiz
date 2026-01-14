@@ -1,5 +1,7 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Volume2 } from 'lucide-react';
 import { WordEntry } from '../types';
 import { speak } from '../utils/tts';
 
@@ -43,9 +45,21 @@ export const Flashcard: React.FC<FlashcardProps> = ({ data, isFlipped, onFlip })
       >
         {/* FRONT */}
         <div 
-          className="col-start-1 row-start-1 w-full min-h-96 backface-hidden bg-white dark:bg-md-surface-container rounded-3xl shadow-xl border border-md-surface-container flex flex-col items-center justify-center p-8"
+          className="col-start-1 row-start-1 w-full min-h-80 backface-hidden bg-white dark:bg-md-surface-container rounded-3xl shadow-xl border border-md-surface-container flex flex-col items-center justify-center p-8 relative"
           style={{ backfaceVisibility: 'hidden' }}
         >
+          {/* Audio Button - Absolute Positioned to not affect layout */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              speak(data.sentence);
+            }}
+            className="absolute top-6 left-6 p-2 rounded-full text-md-outline hover:text-md-primary hover:bg-md-secondary-container/50 transition-colors z-10"
+            title="Read Sentence"
+          >
+             <Volume2 size={20} />
+          </button>
+
           <span className="absolute top-6 right-6 text-xs font-mono text-md-outline bg-md-surface-container px-2 py-1 rounded">
             {data.timestamp}
           </span>
@@ -55,7 +69,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({ data, isFlipped, onFlip })
 
         {/* BACK */}
         <div 
-          className="col-start-1 row-start-1 w-full min-h-96 backface-hidden bg-md-secondary-container rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 text-md-on-secondary-container"
+          className="col-start-1 row-start-1 w-full min-h-80 backface-hidden bg-md-secondary-container rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 text-md-on-secondary-container"
           style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
         >
           {renderSentence()}

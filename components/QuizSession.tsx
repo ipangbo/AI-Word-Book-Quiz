@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Bookmark, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Check, Bookmark, ArrowRight, Undo2 } from 'lucide-react';
 import { WordEntry, QuizConfig } from '../types';
 import { Flashcard } from './Flashcard';
 import { Ripple } from './common/Ripple';
@@ -71,9 +72,12 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh]">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6 p-4 shrink-0">
+    // FIX: Calculate exact height to fit viewport. 
+    // 100dvh (dynamic viewport height) - 5rem (TopBar pt-20) - safe-area-inset-bottom
+    <div className="w-full max-w-2xl mx-auto flex flex-col h-[calc(100dvh-5rem-env(safe-area-inset-bottom))]">
+      
+      {/* Header: Reduced margins/padding for tighter mobile fit */}
+      <div className="flex items-center gap-4 px-4 py-3 mb-1 shrink-0">
         <button
             onClick={handlePrev}
             disabled={currentIndex === 0}
@@ -82,9 +86,10 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
                 ? 'text-md-outline/20 cursor-not-allowed' 
                 : 'text-md-on-surface hover:bg-md-surface-container'
             }`}
+            title="Previous Card"
         >
             <Ripple />
-            <ArrowLeft size={24} className="relative z-10" />
+            <Undo2 size={24} className="relative z-10" />
         </button>
 
         <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
@@ -99,12 +104,13 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
         </span>
       </div>
 
-      {/* Card Area */}
+      {/* Card Area: flex-1 takes remaining space. overflow-y-auto handles internal scrolling. */}
       <div 
         id="card-scroll-container"
-        className="flex-1 overflow-y-auto overflow-x-hidden px-4 w-full"
+        className="flex-1 overflow-y-auto overflow-x-hidden px-4 w-full scroll-smooth"
       >
-        <div className="min-h-full flex flex-col items-center justify-center py-4">
+        {/* min-h-full ensures vertical centering if card is smaller than area */}
+        <div className="min-h-full flex flex-col items-center justify-center py-2">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentCard.id}
@@ -124,30 +130,30 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="p-6 flex items-center justify-between gap-4 shrink-0 bg-md-surface/90 backdrop-blur-sm z-10">
+      {/* Controls: Reduced padding */}
+      <div className="px-4 py-3 flex items-center justify-between gap-3 shrink-0 bg-md-surface/90 backdrop-blur-sm z-10">
         <button
           onClick={toggleMark}
-          className={`relative overflow-hidden flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 font-medium transition-all ${
+          className={`relative overflow-hidden flex-1 py-3.5 rounded-2xl flex items-center justify-center gap-2 font-medium transition-all ${
             markedIds.has(currentCard.id)
               ? 'bg-md-error-container text-md-error'
               : 'bg-md-surface-container text-md-outline hover:bg-md-secondary-container'
           }`}
         >
           <Ripple />
-          <Bookmark size={24} fill={markedIds.has(currentCard.id) ? "currentColor" : "none"} className="relative z-10" />
-          <span className="relative z-10">{markedIds.has(currentCard.id) ? 'Marked' : 'Mark for Review'}</span>
+          <Bookmark size={22} fill={markedIds.has(currentCard.id) ? "currentColor" : "none"} className="relative z-10" />
+          <span className="relative z-10 text-sm md:text-base">{markedIds.has(currentCard.id) ? 'Marked' : 'Mark'}</span>
         </button>
 
         <button
           onClick={handleNext}
-          className="relative overflow-hidden flex-1 bg-md-primary text-md-on-primary py-4 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg hover:shadow-xl hover:bg-opacity-90 active:scale-95 transition-all"
+          className="relative overflow-hidden flex-1 bg-md-primary text-md-on-primary py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-lg hover:shadow-xl hover:bg-opacity-90 active:scale-95 transition-all"
         >
           <Ripple color="rgba(255,255,255,0.3)" />
           {currentIndex === queue.length - 1 ? (
-             <div className="flex items-center gap-2 relative z-10">Finish <Check size={24} /></div>
+             <div className="flex items-center gap-2 relative z-10 text-sm md:text-base">Finish <Check size={22} /></div>
           ) : (
-             <div className="flex items-center gap-2 relative z-10">Next <ArrowRight size={24} /></div>
+             <div className="flex items-center gap-2 relative z-10 text-sm md:text-base">Next <ArrowRight size={22} /></div>
           )}
         </button>
       </div>

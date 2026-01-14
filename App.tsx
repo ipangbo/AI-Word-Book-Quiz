@@ -209,6 +209,7 @@ const App: React.FC = () => {
 
   const showBack = isSettingsOpen || screen !== 'home';
   const showHelp = screen === 'home' && !isSettingsOpen;
+  const showEcosystem = screen === 'home' && !isSettingsOpen;
   const showSettings = !isSettingsOpen;
   
   const titleMap: Record<string, string> = {
@@ -237,6 +238,7 @@ const App: React.FC = () => {
         onHelp={() => setIsHelpOpen(true)}
         onEcosystem={() => setIsEcosystemOpen(true)}
         showHelp={showHelp}
+        showEcosystem={showEcosystem}
         showSettings={showSettings}
       />
 

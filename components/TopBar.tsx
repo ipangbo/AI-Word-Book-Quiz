@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Settings, ArrowLeft, HelpCircle, Compass } from 'lucide-react';
 import { Ripple } from './common/Ripple';
@@ -12,6 +13,7 @@ interface TopBarProps {
   onEcosystem: () => void;
   showHelp?: boolean;
   showSettings?: boolean;
+  showEcosystem?: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ 
@@ -22,7 +24,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onHelp,
   onEcosystem,
   showHelp = false,
-  showSettings = true
+  showSettings = true,
+  showEcosystem = false
 }) => {
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
@@ -81,14 +84,16 @@ export const TopBar: React.FC<TopBarProps> = ({
       </div>
       
       <div className="flex items-center gap-1">
-        <button 
-          onClick={onEcosystem}
-          className="relative overflow-hidden p-2 rounded-full hover:bg-md-surface-container text-md-primary transition-colors group"
-          title="学习生态闭环"
-        >
-          <Ripple />
-          <Compass size={24} className="relative z-10" />
-        </button>
+        {showEcosystem && (
+          <button 
+            onClick={onEcosystem}
+            className="relative overflow-hidden p-2 rounded-full hover:bg-md-surface-container text-md-primary transition-colors group"
+            title="学习生态闭环"
+          >
+            <Ripple />
+            <Compass size={24} className="relative z-10" />
+          </button>
+        )}
         
         {showHelp && onHelp && (
           <button 
