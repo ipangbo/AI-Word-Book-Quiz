@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Eye, X, SkipForward, Pause, Play } from 'lucide-react';
@@ -211,8 +212,8 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col h-[90vh] relative">
-      <div className="flex items-center justify-between mb-2 p-4">
+    <div className="w-full max-w-2xl mx-auto flex flex-col h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] relative">
+      <div className="flex items-center justify-between mb-1 px-4 py-3 shrink-0">
         <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
             className="h-full bg-md-primary"
@@ -220,7 +221,7 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
             animate={{ width: `${sessionProgress}%` }}
           />
         </div>
-        <span className="text-sm font-medium font-mono text-md-outline ml-4">
+        <span className="text-sm font-medium font-mono text-md-outline ml-4 min-w-[3ch] text-right">
           {currentIndex + 1}/{queue.length}
         </span>
         <button 
@@ -238,7 +239,7 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
              initial={{ opacity: 0, y: -10 }}
              animate={{ opacity: 1, y: 0 }}
              exit={{ opacity: 0, y: -10 }}
-             className="absolute top-20 right-4 z-50 bg-white dark:bg-md-surface-container shadow-xl rounded-2xl border border-md-surface-container p-4 min-w-[280px]"
+             className="absolute top-16 right-4 z-50 bg-white dark:bg-md-surface-container shadow-xl rounded-2xl border border-md-surface-container p-4 min-w-[280px]"
            >
               <div className="flex justify-between items-center mb-4">
                  <span className="text-xs font-bold text-md-outline uppercase">Visible Hints</span>
@@ -259,105 +260,107 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
 
       <div 
         ref={scrollRef}
-        className="flex-1 flex flex-col items-center justify-start p-4 w-full relative overflow-y-auto"
+        className="flex-1 overflow-y-auto overflow-x-hidden w-full relative"
       >
-        <div className="w-full bg-white dark:bg-md-surface-container border border-md-surface-container rounded-3xl p-6 md:p-8 mb-6 shadow-sm text-center">
-            {getMaskedSentence()}
+        <div className="min-h-full flex flex-col items-center justify-center p-4">
+          <div className="w-full bg-white dark:bg-md-surface-container border border-md-surface-container rounded-3xl p-6 md:p-8 mb-6 shadow-sm text-center">
+              {getMaskedSentence()}
+          </div>
+
+          <div className="w-full space-y-3 mb-6 text-center min-h-[60px]">
+              <AnimatePresence>
+                  {showPhonetic && currentWord.phonetic && (
+                      <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-md-outline font-mono text-lg">
+                          [{currentWord.phonetic}]
+                      </motion.p>
+                  )}
+                  <div className="flex justify-center gap-2 items-baseline flex-wrap">
+                  {showPos && (
+                      <motion.span initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-xs font-bold bg-md-secondary-container text-md-on-secondary-container px-2 py-1 rounded">
+                          {currentWord.pos}
+                      </motion.span>
+                  )}
+                  {showDefinition && (
+                      <motion.span initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-md-on-surface font-medium">
+                          {currentWord.definition}
+                      </motion.span>
+                  )}
+                  </div>
+                  {showTranslation && (
+                      <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-md-outline text-sm italic">
+                          {currentWord.translation}
+                      </motion.p>
+                  )}
+              </AnimatePresence>
+          </div>
+
+          <div className={`grid gap-3 w-full max-w-md ${currentOptions.length > 4 ? 'grid-cols-2' : 'grid-cols-1'}`}>
+              {currentOptions.map((option, idx) => {
+                  const isCorrectOption = option.toLowerCase() === currentWord.word.toLowerCase();
+                  const isSelected = selectedOption === option;
+                  
+                  let stateClass = "bg-white dark:bg-md-surface-container border-md-surface-container text-md-on-surface hover:bg-md-surface-container/50";
+                  
+                  if (feedback !== 'idle') {
+                      if (isCorrectOption) {
+                          stateClass = "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-800 dark:text-green-200 font-bold";
+                      } else if (isSelected && !isCorrectOption) {
+                          stateClass = "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200";
+                      } else {
+                          stateClass = "opacity-40 bg-md-surface-container/20 border-transparent";
+                      }
+                  }
+
+                  return (
+                      <button
+                          key={idx}
+                          onClick={() => handleOptionClick(option)}
+                          disabled={feedback !== 'idle' && !(isSelected && feedback === 'incorrect' && !isPaused)}
+                          className={`relative overflow-hidden p-4 rounded-2xl border-2 text-lg font-medium transition-colors duration-200 ${stateClass}`}
+                      >
+                          {feedback === 'idle' && <Ripple />}
+                          <div className="relative z-10 flex items-center justify-center gap-2">
+                              <span>{option}</span>
+                              {isSelected && feedback === 'incorrect' && (
+                                  <motion.div 
+                                      initial={{ scale: 0 }} 
+                                      animate={{ scale: 1 }}
+                                      className={isPaused ? "text-md-primary" : "text-md-error"}
+                                  >
+                                      {isPaused ? <Play size={16} fill="currentColor" /> : <Pause size={16} />}
+                                  </motion.div>
+                              )}
+                          </div>
+
+                          {isSelected && feedback !== 'idle' && (
+                              <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/5 w-full">
+                                  <div 
+                                      className={`h-full ${
+                                          feedback === 'correct' ? 'bg-green-500' : 'bg-red-500'
+                                      }`}
+                                      style={{ width: `${progress}%` }}
+                                  />
+                              </div>
+                          )}
+                      </button>
+                  );
+              })}
+          </div>
+          
+          {feedback === 'incorrect' && !isPaused && (
+              <p className="text-[10px] text-md-outline mt-4 opacity-60 animate-pulse">
+                  Tap the selected option to pause
+              </p>
+          )}
+
         </div>
-
-        <div className="w-full space-y-3 mb-6 text-center min-h-[60px]">
-            <AnimatePresence>
-                {showPhonetic && currentWord.phonetic && (
-                    <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-md-outline font-mono text-lg">
-                        [{currentWord.phonetic}]
-                    </motion.p>
-                )}
-                <div className="flex justify-center gap-2 items-baseline flex-wrap">
-                {showPos && (
-                    <motion.span initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-xs font-bold bg-md-secondary-container text-md-on-secondary-container px-2 py-1 rounded">
-                        {currentWord.pos}
-                    </motion.span>
-                )}
-                {showDefinition && (
-                    <motion.span initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-md-on-surface font-medium">
-                        {currentWord.definition}
-                    </motion.span>
-                )}
-                </div>
-                {showTranslation && (
-                    <motion.p initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="text-md-outline text-sm italic">
-                        {currentWord.translation}
-                    </motion.p>
-                )}
-            </AnimatePresence>
-        </div>
-
-        <div className={`grid gap-3 w-full max-w-md ${currentOptions.length > 4 ? 'grid-cols-2' : 'grid-cols-1'}`}>
-            {currentOptions.map((option, idx) => {
-                const isCorrectOption = option.toLowerCase() === currentWord.word.toLowerCase();
-                const isSelected = selectedOption === option;
-                
-                let stateClass = "bg-white dark:bg-md-surface-container border-md-surface-container text-md-on-surface hover:bg-md-surface-container/50";
-                
-                if (feedback !== 'idle') {
-                    if (isCorrectOption) {
-                        stateClass = "bg-green-100 dark:bg-green-900/30 border-green-300 dark:border-green-700 text-green-800 dark:text-green-200 font-bold";
-                    } else if (isSelected && !isCorrectOption) {
-                        stateClass = "bg-red-100 dark:bg-red-900/30 border-red-300 dark:border-red-700 text-red-800 dark:text-red-200";
-                    } else {
-                        stateClass = "opacity-40 bg-md-surface-container/20 border-transparent";
-                    }
-                }
-
-                return (
-                    <button
-                        key={idx}
-                        onClick={() => handleOptionClick(option)}
-                        disabled={feedback !== 'idle' && !(isSelected && feedback === 'incorrect' && !isPaused)}
-                        className={`relative overflow-hidden p-4 rounded-2xl border-2 text-lg font-medium transition-colors duration-200 ${stateClass}`}
-                    >
-                        {feedback === 'idle' && <Ripple />}
-                        <div className="relative z-10 flex items-center justify-center gap-2">
-                            <span>{option}</span>
-                            {isSelected && feedback === 'incorrect' && (
-                                <motion.div 
-                                    initial={{ scale: 0 }} 
-                                    animate={{ scale: 1 }}
-                                    className={isPaused ? "text-md-primary" : "text-md-error"}
-                                >
-                                    {isPaused ? <Play size={16} fill="currentColor" /> : <Pause size={16} />}
-                                </motion.div>
-                            )}
-                        </div>
-
-                        {isSelected && feedback !== 'idle' && (
-                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/5 dark:bg-white/5 w-full">
-                                <div 
-                                    className={`h-full ${
-                                        feedback === 'correct' ? 'bg-green-500' : 'bg-red-500'
-                                    }`}
-                                    style={{ width: `${progress}%` }}
-                                />
-                            </div>
-                        )}
-                    </button>
-                );
-            })}
-        </div>
-        
-        {feedback === 'incorrect' && !isPaused && (
-            <p className="text-xs text-md-outline mt-4 opacity-60 animate-pulse">
-                Tap the selected option to pause
-            </p>
-        )}
-
       </div>
 
-      <div className="p-6 flex items-center gap-4">
+      <div className="px-4 py-3 flex items-center gap-3 shrink-0 bg-md-surface/90 backdrop-blur-sm z-10">
         {feedback === 'idle' ? (
             <button
             onClick={handleSkip}
-            className="relative overflow-hidden w-full py-4 rounded-full flex items-center justify-center gap-2 font-medium text-md-outline hover:bg-md-surface-container transition-colors"
+            className="relative overflow-hidden w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 font-medium text-md-outline bg-md-surface-container hover:bg-md-secondary-container transition-colors"
             >
             <Ripple />
             <SkipForward size={20} className="relative z-10" />
@@ -366,7 +369,7 @@ export const MultipleChoiceSession: React.FC<MultipleChoiceSessionProps> = ({ en
         ) : (
             <button
             onClick={nextWord}
-            className="relative overflow-hidden w-full bg-md-secondary-container text-md-on-secondary-container py-4 rounded-full flex items-center justify-center gap-2 font-bold shadow-md hover:bg-opacity-90 active:scale-95 transition-all"
+            className="relative overflow-hidden w-full bg-md-secondary-container text-md-on-secondary-container py-3.5 rounded-2xl flex items-center justify-center gap-2 font-bold shadow-md hover:bg-opacity-90 active:scale-95 transition-all"
             >
                 <Ripple />
                 <span className="relative z-10">Next Word</span>
