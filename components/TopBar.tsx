@@ -62,7 +62,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <div 
-      className={`fixed top-0 left-0 right-0 z-50 px-4 py-3 bg-md-surface/90 backdrop-blur-md flex items-center justify-between border-b border-transparent transition-transform duration-300 ease-in-out ${
+      className={`fixed top-0 left-0 right-0 z-50 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] bg-md-surface/90 backdrop-blur-md flex items-center justify-between border-b border-transparent transition-transform duration-300 ease-in-out ${
         isVisible ? 'translate-y-0 shadow-sm' : '-translate-y-full'
       }`}
     >

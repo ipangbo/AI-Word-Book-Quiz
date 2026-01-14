@@ -72,9 +72,7 @@ export const QuizSession: React.FC<QuizSessionProps> = ({ entries, config, onFin
   };
 
   return (
-    // FIX: Calculate exact height to fit viewport. 
-    // 100dvh (dynamic viewport height) - 5rem (TopBar pt-20) - safe-area-inset-bottom
-    <div className="w-full max-w-2xl mx-auto flex flex-col h-[calc(100dvh-5rem-env(safe-area-inset-bottom))]">
+    <div className="w-full max-w-2xl mx-auto flex flex-col h-full pb-[env(safe-area-inset-bottom)]">
       
       {/* Header: Reduced margins/padding for tighter mobile fit */}
       <div className="flex items-center gap-4 px-4 py-3 mb-1 shrink-0">

@@ -60,7 +60,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isSettingsOpen) {
-        window.scrollTo(0, 0);
+        // Find the scrollable container and reset scroll
+        const scrollContainer = document.getElementById('main-scroll-container');
+        if (scrollContainer) scrollContainer.scrollTop = 0;
     }
   }, [screen, isSettingsOpen]);
 
@@ -227,8 +229,11 @@ const App: React.FC = () => {
     results: 'Results',
   };
 
+  // Identify screens that require fixed, non-scrolling layout (because they handle their own scroll)
+  const isFixedScreen = ['quiz_session', 'dictation_session', 'cloze_session', 'mc_session'].includes(screen);
+
   return (
-    <div className="min-h-screen bg-md-surface text-md-on-surface font-sans selection:bg-md-primary-container selection:text-md-on-primary-container overflow-x-hidden transition-colors duration-300 pt-20">
+    <div className="h-[100dvh] w-full bg-md-surface text-md-on-surface font-sans selection:bg-md-primary-container selection:text-md-on-primary-container overflow-hidden transition-colors duration-300 flex flex-col">
       
       <TopBar 
         title={isSettingsOpen ? 'Settings' : titleMap[screen]} 
@@ -242,104 +247,109 @@ const App: React.FC = () => {
         showSettings={showSettings}
       />
 
-      <div className="container mx-auto">
-        <AnimatePresence mode="wait">
-          {screen === 'home' && (
-            <ImportScreen key="home" onDataLoaded={handleDataLoaded} showToast={showToast} />
-          )}
+      <div 
+        id="main-scroll-container"
+        className={`flex-1 w-full relative pt-[calc(4rem+env(safe-area-inset-top))] ${isFixedScreen ? 'overflow-hidden' : 'overflow-y-auto'}`}
+      >
+        <div className={`container mx-auto flex flex-col ${isFixedScreen ? 'h-full' : 'min-h-full'}`}>
+            <AnimatePresence mode="wait">
+            {screen === 'home' && (
+                <ImportScreen key="home" onDataLoaded={handleDataLoaded} showToast={showToast} />
+            )}
 
-          {screen === 'review' && (
-            <ReviewScreen key="review" data={data} onConfirm={handleReviewConfirm} />
-          )}
+            {screen === 'review' && (
+                <ReviewScreen key="review" data={data} onConfirm={handleReviewConfirm} />
+            )}
 
-          {screen === 'quiz_select' && (
-            <QuizSelectionScreen key="select" onSelect={handleQuizModeSelect} />
-          )}
+            {screen === 'quiz_select' && (
+                <QuizSelectionScreen key="select" onSelect={handleQuizModeSelect} />
+            )}
 
-          {screen === 'quiz_setup' && (
-            <QuizSetup 
-              key="setup" 
-              totalWords={data.length} 
-              onStart={handleStartFlashcard} 
-            />
-          )}
+            {screen === 'quiz_setup' && (
+                <QuizSetup 
+                key="setup" 
+                totalWords={data.length} 
+                onStart={handleStartFlashcard} 
+                />
+            )}
 
-          {screen === 'dictation_setup' && (
-             <DictationSetup
-                key="dictation_setup"
-                totalWords={data.length}
-                onStart={handleStartDictation}
-             />
-          )}
+            {screen === 'dictation_setup' && (
+                <DictationSetup
+                    key="dictation_setup"
+                    totalWords={data.length}
+                    onStart={handleStartDictation}
+                />
+            )}
 
-          {screen === 'cloze_setup' && (
-              <ClozeSetup
-                key="cloze_setup"
-                totalWords={data.length}
-                onStart={handleStartCloze}
-              />
-          )}
+            {screen === 'cloze_setup' && (
+                <ClozeSetup
+                    key="cloze_setup"
+                    totalWords={data.length}
+                    onStart={handleStartCloze}
+                />
+            )}
 
-          {screen === 'mc_setup' && (
-              <MultipleChoiceSetup
-                key="mc_setup"
-                totalWords={data.length}
-                onStart={handleStartMC}
-              />
-          )}
+            {screen === 'mc_setup' && (
+                <MultipleChoiceSetup
+                    key="mc_setup"
+                    totalWords={data.length}
+                    onStart={handleStartMC}
+                />
+            )}
 
-          {screen === 'quiz_session' && quizConfig && (
-            <QuizSession
-              key="session"
-              entries={data}
-              config={quizConfig}
-              onFinish={handleFinishFlashcard}
-              onExit={handleRestart}
-            />
-          )}
-
-          {screen === 'dictation_session' && dictationConfig && (
-            <DictationSession
-              key="dictation_session"
-              entries={data}
-              config={dictationConfig}
-              onFinish={handleFinishQuiz}
-              onExit={handleRestart}
-            />
-          )}
-
-          {screen === 'cloze_session' && clozeConfig && (
-              <ClozeSession
-                key="cloze_session"
+            {screen === 'quiz_session' && quizConfig && (
+                <QuizSession
+                key="session"
                 entries={data}
-                config={clozeConfig}
+                config={quizConfig}
+                onFinish={handleFinishFlashcard}
+                onExit={handleRestart}
+                />
+            )}
+
+            {screen === 'dictation_session' && dictationConfig && (
+                <DictationSession
+                key="dictation_session"
+                entries={data}
+                config={dictationConfig}
                 onFinish={handleFinishQuiz}
                 onExit={handleRestart}
-              />
-          )}
+                />
+            )}
 
-          {screen === 'mc_session' && mcConfig && (
-              <MultipleChoiceSession
-                key="mc_session"
-                entries={data}
-                config={mcConfig}
-                onFinish={handleFinishQuiz}
-                onExit={handleRestart}
-              />
-          )}
+            {screen === 'cloze_session' && clozeConfig && (
+                <ClozeSession
+                    key="cloze_session"
+                    entries={data}
+                    config={clozeConfig}
+                    onFinish={handleFinishQuiz}
+                    onExit={handleRestart}
+                />
+            )}
 
-          {screen === 'results' && (
-            <ResultsScreen
-              key="results"
-              sessionEntries={sessionEntries}
-              markedIds={markedIds}
-              dictationMistakes={quizResults}
-              onRestart={handleRestart}
-              onHome={handleHome}
-              showToast={showToast}
-            />
-          )}
-        </AnimatePresence>
+            {screen === 'mc_session' && mcConfig && (
+                <MultipleChoiceSession
+                    key="mc_session"
+                    entries={data}
+                    config={mcConfig}
+                    onFinish={handleFinishQuiz}
+                    onExit={handleRestart}
+                />
+            )}
+
+            {screen === 'results' && (
+                <ResultsScreen
+                key="results"
+                sessionEntries={sessionEntries}
+                markedIds={markedIds}
+                dictationMistakes={quizResults}
+                onRestart={handleRestart}
+                onHome={handleHome}
+                showToast={showToast}
+                />
+            )}
+            </AnimatePresence>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -349,7 +359,7 @@ const App: React.FC = () => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: '100%' }}
                 transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="fixed inset-0 z-40 bg-md-surface pt-20 overflow-y-auto"
+                className="fixed inset-0 z-40 bg-md-surface pt-[calc(4rem+env(safe-area-inset-top))] overflow-y-auto"
                 style={{ willChange: 'transform' }}
             >
                 <div className="container mx-auto">

@@ -190,7 +190,7 @@ export const DictationSession: React.FC<DictationSessionProps> = ({ entries, con
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto flex flex-col h-[calc(100dvh-5rem-env(safe-area-inset-bottom))] relative">
+    <div className="w-full max-w-2xl mx-auto flex flex-col h-full pb-[env(safe-area-inset-bottom)] relative">
       <div className="flex items-center justify-between mb-1 px-4 py-3 shrink-0">
         <div className="flex-1 h-2 bg-md-surface-container rounded-full overflow-hidden">
           <motion.div 
