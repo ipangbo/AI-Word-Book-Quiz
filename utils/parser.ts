@@ -44,6 +44,19 @@ const generateId = () => {
 };
 
 /**
+ * Normalizes LaTeX style quotes to standard quotes.
+ * `` -> "
+ * '' -> "
+ * ` -> '
+ */
+const normalizeTexQuotes = (str: string) => {
+  return str
+    .replace(/``/g, '"')
+    .replace(/''/g, '"')
+    .replace(/`/g, "'");
+};
+
+/**
  * Extracts metadata like \title{} and \subtitle{} from the raw text.
  */
 export const extractMetadata = (rawText: string): { title?: string, subtitle?: string } => {
@@ -51,8 +64,8 @@ export const extractMetadata = (rawText: string): { title?: string, subtitle?: s
   const subtitleMatch = rawText.match(/\\subtitle\{([^}]+)\}/);
   
   return {
-    title: titleMatch ? titleMatch[1].trim() : undefined,
-    subtitle: subtitleMatch ? subtitleMatch[1].trim() : undefined
+    title: titleMatch ? normalizeTexQuotes(titleMatch[1].trim()) : undefined,
+    subtitle: subtitleMatch ? normalizeTexQuotes(subtitleMatch[1].trim()) : undefined
   };
 };
 
@@ -98,7 +111,7 @@ export const parseInputData = (rawText: string): WordEntry[] => {
     let sentence = "";
     const sentenceRes = extractBalanced(rawText, ptr, '{', '}');
     if (sentenceRes) {
-        sentence = sentenceRes.content;
+        sentence = normalizeTexQuotes(sentenceRes.content);
         ptr = sentenceRes.endIndex;
     } else {
         currentIndex = blockStart + 1;
@@ -109,7 +122,7 @@ export const parseInputData = (rawText: string): WordEntry[] => {
     let translation = "";
     const transRes = extractBalanced(rawText, ptr, '{', '}');
     if (transRes) {
-        translation = transRes.content;
+        translation = normalizeTexQuotes(transRes.content);
         ptr = transRes.endIndex;
     } else {
         currentIndex = blockStart + 1;
@@ -139,26 +152,34 @@ export const parseInputData = (rawText: string): WordEntry[] => {
         // Param 1: Word in Sentence (New)
         let wordInSentence = "";
         const wisRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
-        if (wisRes) { wordInSentence = wisRes.content; wPtr = wisRes.endIndex; }
-        else { wIdx = wStart + 1; continue; }
+        if (wisRes) { 
+            wordInSentence = normalizeTexQuotes(wisRes.content); 
+            wPtr = wisRes.endIndex; 
+        } else { wIdx = wStart + 1; continue; }
 
         // Param 2: Word Prototype (Old 'word')
         let wordPrototype = "";
         const wpRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
-        if (wpRes) { wordPrototype = wpRes.content; wPtr = wpRes.endIndex; }
-        else { wIdx = wStart + 1; continue; }
+        if (wpRes) { 
+            wordPrototype = normalizeTexQuotes(wpRes.content); 
+            wPtr = wpRes.endIndex; 
+        } else { wIdx = wStart + 1; continue; }
 
         // Param 3: POS
         let pos = "";
         const pRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
-        if (pRes) { pos = pRes.content; wPtr = pRes.endIndex; }
-        else { wIdx = wStart + 1; continue; }
+        if (pRes) { 
+            pos = normalizeTexQuotes(pRes.content); 
+            wPtr = pRes.endIndex; 
+        } else { wIdx = wStart + 1; continue; }
 
         // Param 4: Def
         let def = "";
         const dRes = extractBalanced(rawWordsBlock, wPtr, '{', '}');
-        if (dRes) { def = dRes.content; wPtr = dRes.endIndex; }
-        else { wIdx = wStart + 1; continue; }
+        if (dRes) { 
+            def = normalizeTexQuotes(dRes.content); 
+            wPtr = dRes.endIndex; 
+        } else { wIdx = wStart + 1; continue; }
         
         // Param 5: Phonetic (Optional)
         let phonetic: string | undefined = undefined;
