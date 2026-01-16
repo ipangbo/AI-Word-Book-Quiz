@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ThemeName, ThemeMode, FontSizeLevel, FONT_SIZE_KEY, applyTheme, applyFontSize } from '../utils/theme';
@@ -13,9 +14,16 @@ import { MCDefaultsSection } from './settings/sections/MCDefaultsSection';
 import { TTSSection } from './settings/sections/TTSSection';
 import { DevToolsSection } from './settings/sections/DevToolsSection';
 
+// Declare the global variable that should be defined in vite.config.ts
+// define: { __BUILD_TIMESTAMP__: JSON.stringify(new Date().toLocaleString()) }
+declare const __BUILD_TIMESTAMP__: string | undefined;
+
 const THEME_MODE_KEY = 'cinevocab_theme_mode';
 const THEME_NAME_KEY = 'cinevocab_theme_name';
 const CUSTOM_COLOR_KEY = 'cinevocab_custom_color';
+
+// Determine the timestamp string based on build environment availability
+const BUILD_INFO = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? __BUILD_TIMESTAMP__ : "Click-to-Run";
 
 interface SettingsScreenProps {
   onQuickImport?: (data: WordEntry[]) => void;
@@ -183,25 +191,30 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onQuickImport, s
 
       {/* --- About Section --- */}
       <div className="bg-white dark:bg-md-surface-container rounded-3xl p-6 border border-md-surface-container shadow-sm mb-6">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 mb-4">
           <div className="p-1 bg-md-surface-container rounded-2xl shrink-0">
             <Logo size={48} />
           </div>
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h3 className="text-xl font-bold text-md-on-surface">About</h3>
-            </div>
-            <p 
-              className="text-lg text-md-on-surface cursor-default select-none active:scale-95 transition-transform"
+            <h3 className="text-xl font-bold text-md-on-surface leading-tight">About CineVocab</h3>
+            <div 
+              className="flex items-center gap-2 text-md-outline mt-0.5 cursor-pointer active:opacity-70 transition-opacity select-none"
               onClick={handleVersionClick}
+              title="Tap 5 times for Developer Tools"
             >
-              <span className="font-bold">CineVocab</span> v1.2.11
-            </p>
+              <span className="font-medium text-sm">v1.2.11</span>
+              <span className="opacity-30 text-xs">•</span>
+              <span className="text-xs font-mono opacity-70">
+                 {BUILD_INFO === "Click-to-Run" ? "Click-to-Run" : `Build ${BUILD_INFO}`}
+              </span>
+            </div>
           </div>
         </div>
-        <p className="text-md-outline mt-3 text-base leading-relaxed">
+        
+        <p className="text-md-outline text-base leading-relaxed">
           A Material You styled vocabulary learning application designed to help you learn English through the context of movies and TV shows.
         </p>
+        
         <div className="mt-4 pt-4 border-t border-md-outline/10 flex items-center justify-between">
            <p className="text-xs text-md-outline">
              © {new Date().getFullYear()} <a href="https://ipangbo.cn" target="_blank" rel="noopener noreferrer" className="text-md-primary hover:underline font-medium">ipangbo.cn</a>
