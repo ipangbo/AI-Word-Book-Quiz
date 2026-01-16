@@ -14,8 +14,11 @@ import { MCDefaultsSection } from './settings/sections/MCDefaultsSection';
 import { TTSSection } from './settings/sections/TTSSection';
 import { DevToolsSection } from './settings/sections/DevToolsSection';
 
-// Declare the global variable that should be defined in vite.config.ts
-// define: { __BUILD_TIMESTAMP__: JSON.stringify(new Date().toLocaleString()) }
+/** 
+ * Declare the global variable that should be defined in build config (e.g. vite.config.ts)
+ * Format requirement: yyyymmddhhmm (No separators, no spaces, e.g. 202410271430)
+ * Example define: { __BUILD_TIMESTAMP__: JSON.stringify("202410271430") }
+ */
 declare const __BUILD_TIMESTAMP__: string | undefined;
 
 const THEME_MODE_KEY = 'cinevocab_theme_mode';
@@ -203,9 +206,9 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onQuickImport, s
               title="Tap 5 times for Developer Tools"
             >
               <span className="font-medium text-sm">v1.2.11</span>
-              <span className="opacity-30 text-xs">•</span>
-              <span className="text-xs font-mono opacity-70">
-                 {BUILD_INFO === "Click-to-Run" ? "Click-to-Run" : `Build ${BUILD_INFO}`}
+              <span className="opacity-30 text-xs font-bold">•</span>
+              <span className="text-xs font-mono opacity-80">
+                 {BUILD_INFO === "Click-to-Run" ? "Click-to-Run" : BUILD_INFO}
               </span>
             </div>
           </div>
