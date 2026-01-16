@@ -16,8 +16,6 @@ import { DevToolsSection } from './settings/sections/DevToolsSection';
 
 /** 
  * Declare the global variable that should be defined in build config (e.g. vite.config.ts)
- * Format requirement: yyyymmddhhmm (No separators, no spaces, e.g. 202410271430)
- * Example define: { __BUILD_TIMESTAMP__: JSON.stringify("202410271430") }
  */
 declare const __BUILD_TIMESTAMP__: string | undefined;
 
@@ -25,8 +23,24 @@ const THEME_MODE_KEY = 'cinevocab_theme_mode';
 const THEME_NAME_KEY = 'cinevocab_theme_name';
 const CUSTOM_COLOR_KEY = 'cinevocab_custom_color';
 
-// Determine the timestamp string based on build environment availability
-const BUILD_INFO = typeof __BUILD_TIMESTAMP__ !== 'undefined' ? __BUILD_TIMESTAMP__ : "Click-to-Run";
+/**
+ * Formats a Date object to yyyymmddhhmm based on local timezone (no separators)
+ */
+const formatTimestamp = (input: string): string => {
+  const date = new Date(input);
+  if (isNaN(date.getTime())) return input; // 如果无法解析则返回原始字符串
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${y}${m}${d}${h}${min}`;
+};
+
+// 核心逻辑修正：如果没配置配置 __BUILD_TIMESTAMP__，则显示 "Click-to-Run"
+const BUILD_INFO = (typeof __BUILD_TIMESTAMP__ !== 'undefined' && __BUILD_TIMESTAMP__ !== '')
+  ? formatTimestamp(__BUILD_TIMESTAMP__)
+  : "Click-to-Run";
 
 interface SettingsScreenProps {
   onQuickImport?: (data: WordEntry[]) => void;
@@ -208,7 +222,7 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onQuickImport, s
               <span className="font-medium text-sm">v1.2.11</span>
               <span className="opacity-30 text-xs font-bold">•</span>
               <span className="text-xs font-mono opacity-80">
-                 {BUILD_INFO === "Click-to-Run" ? "Click-to-Run" : BUILD_INFO}
+                 {BUILD_INFO}
               </span>
             </div>
           </div>
